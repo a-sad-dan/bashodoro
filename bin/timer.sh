@@ -14,11 +14,14 @@ start_timer() {
         keyPress=$(get_input)
 
         if [[ $keyPress == "p" || $keyPress == "P" ]]; then
+            bash bin/notify.sh pause
             pause_timer "$i"
             return
         fi
     done
-    bash bin/notify.sh "Time's up!"
+    bash bin/notify.sh complete
+    echo
+    exit 0
 }
 
 # Todo - put these functions in a utility file
@@ -40,6 +43,7 @@ pause_timer() {
     while true; do
         key=$(get_input)
         if [[ $key == "r" || $key == "R" ]]; then
+            bash bin/notify.sh resume
             resume_timer "$paused_time"
         fi
     done
@@ -53,7 +57,10 @@ resume_timer() {
 }
 
 case "$1" in
-start) start_timer 10 ;; # Example: 10s
+start)
+    bash bin/notify.sh start
+    start_timer 10
+    ;; # Example: 10s
 pause) pause_timer ;;
 resume) resume_timer ;;
 stop) echo "Timer stopped." ;;
