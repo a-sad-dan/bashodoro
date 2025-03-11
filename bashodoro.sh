@@ -1,55 +1,42 @@
 #! /bin/bash
-
-# Main entry point of the script
-
-set -euo pipefail #safe scripting
-
-CONFIG_FILE="config/settings.conf"
-source "$CONFIG_FILE"
-
-# Helper function for usage instructions
-usage() {
-  echo "Usage: $0 {start|pause|resume|stop}"
-  exit 1
-}
-
-if [[ $# -eq 0 ]]; then
-  usage
-fi
-
-#!/bin/bash
-
 set -euo pipefail # Safe scripting
 
 # Load configuration
 CONFIG_FILE="config/settings.conf"
+# shellcheck disable=SC1090
 source "$CONFIG_FILE"
 
 # Helper function for usage instructions
-usage() {
-  echo "Usage: $0 {start|pause|resume|stop}"
+help() {
+  echo "bashodoro - A simple Bash-based Pomodoro timer"
+  echo ""
+  echo "Usage: bashodoro -> Starts a bashodoro session with the default config"
+  echo ""
+  echo "Options:"
+  echo "  -s, --stats       show the statistics of sessions"
+  echo "  -c, --config               show the current config"
+  echo "  -h, --help            Show this help message"
+  echo ""
   exit 1
 }
 
 # Argument parsing
 if [[ $# -eq 0 ]]; then
-  usage
-fi
-
-case "$1" in
-start)
   bash bin/timer.sh start
-  ;;
-pause)
-  bash bin/timer.sh pause
-  ;;
-resume)
-  bash bin/timer.sh resume
-  ;;
-stop)
-  bash bin/timer.sh stop
-  ;;
-*)
-  usage
-  ;;
-esac
+else
+  case "$1" in
+  --help | -h)
+    help
+    ;;
+  --stats | -s)
+    echo "Show the history"
+    ;;
+  --config | -c)
+    echo "Show the config"
+    ;;
+  *)
+    echo "$0 Invalid option"
+    echo "Try -h for help"
+    ;;
+  esac
+fi
