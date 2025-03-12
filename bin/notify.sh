@@ -17,12 +17,11 @@ notificationSound() {
 }
 
 sendNotification() {
-  #
   message="${1:-Task Completed!}" # Use first argument or default message
 
   if command -v notify-send &>/dev/null; then
-    notify-send -i "$(realpath ./../logo.png)" \
-      -t 2000 \
+    notify-send -i "$(realpath ./logo.png)" \
+      -t 1000 \
       -a "Bashodoro" \
       "Bashodoro" "$message"
 
