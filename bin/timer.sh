@@ -15,11 +15,19 @@ start_timer() {
 
     local duration="$1"
     local type="$2" #Pomodoro #Short_break #Long_break
-    echo "Session Number : $session"
-    echo "press p to pause the timer"
 
-    for ((i = duration; i >= 0; i--)); do
-        echo -ne "\rTime Left : $i"
+    print_separator
+    if [[ $type = "Pomodoro" ]]; then
+        echo "⌛ Work in Progress... Press [P] to pause"
+        echo "🎯 Work Session #$session"
+    elif [[ $type = "Short_break" ]]; then
+        echo "☕ Take a short break! Relax for a few minutes."
+    elif [[ $type = "Long_break" ]]; then
+        echo "🌿 Time for a long break! Step away and recharge."
+    fi
+
+    for ((i = duration; i >= 1; i--)); do
+        echo -ne "\r⏳ Time Left: $i"
         delete_line
 
         # listen for interrupt every 1 s
@@ -34,7 +42,7 @@ start_timer() {
 
     # This marks the session as complete
     bash bin/notify.sh complete
-    
+
     # Log the session in the file
     save_session "$type" "$WORK_DURATION"
     return
@@ -51,13 +59,20 @@ get_input() {
     echo "$input"
 }
 
+print_separator() {
+    echo -e "──────────────────────────────────────"
+}
+
 pause_timer() {
-    echo ""
+    clear
+    print_separator
+    echo " "
     paused_time=$1
     type=$2
 
-    echo "Timer paused at $paused_time for $type"
-    echo "press r to resume"
+    echo "⏸ Timer Paused "
+    echo "🕒 $type | $paused_time left"
+    echo "Press [r] to Resume the timer"
 
     while true; do
         key=$(get_input)
