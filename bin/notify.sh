@@ -6,10 +6,10 @@ set -euo pipefail
 
 notificationSound() {
   if command -v paplay &>/dev/null; then
-    paplay sounds/"$1"   # Linux (PulseAudio)
+    paplay sounds/"$1" & # Linux (PulseAudio) -> Fixed Blocking of script
   elif command -v afplay &>/dev/null; then
-    afplay sounds/"$1"   # macOS (Built-in)
-  #elif command -v powershell.exe &>/dev/null; then
+    afplay sounds/"$1" # macOS (Built-in)
+    #elif command -v powershell.exe &>/dev/null; then
     #powershell.exe -c (New-Object Media.SoundPlayer 'sounds\"$1"').PlaySync()  # Windows
   else
     echo "No supported audio player found."
@@ -37,19 +37,25 @@ sendNotification() {
 }
 
 case "$1" in
-start) sendNotification "Timer Started!" 
-notificationSound "joyous.wav";;
-pause) sendNotification "Timer Paused!" 
-notificationSound "slick.wav"
-;;
-resume) sendNotification "Timer Resumed!" 
-notificationSound "jokingly.wav" 
-;;
-stop) sendNotification "Timer Stopped!" 
-notificationSound "joyous.wav"
-;;
-complete) sendNotification "Time's up!" 
-notificationSound "jokingly.wav"
-;;
+start)
+  sendNotification "Timer Started!"
+  notificationSound "joyous.wav"
+  ;;
+pause)
+  sendNotification "Timer Paused!"
+  notificationSound "slick.wav"
+  ;;
+resume)
+  sendNotification "Timer Resumed!"
+  notificationSound "jokingly.wav"
+  ;;
+stop)
+  sendNotification "Timer Stopped!"
+  notificationSound "joyous.wav"
+  ;;
+complete)
+  sendNotification "Time's up!"
+  notificationSound "jokingly.wav"
+  ;;
 *) echo "Usage: $0 {start|pause|resume|stop}" ;;
 esac
