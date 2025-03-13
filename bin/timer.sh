@@ -16,6 +16,18 @@ start_timer() {
     local duration="$1"
     local type="$2" #Pomodoro #Short_break #Long_break
 
+    # Determine total_time based on type from the sourced config file
+    local total_time
+    case "$type" in
+    "Pomodoro") total_time=$WORK_DURATION ;;
+    "Short_break") total_time=$SHORT_BREAK ;;
+    "Long_break") total_time=$LONG_BREAK ;;
+    *)
+        echo "Invalid type: $type"
+        return 1
+        ;;
+    esac
+
     print_separator
     if [[ $type = "Pomodoro" ]]; then
         echo "⌛ Work in Progress... Press [P] to pause"
@@ -27,7 +39,7 @@ start_timer() {
     fi
 
     for ((i = duration; i >= 1; i--)); do
-        echo -ne "\r⏳ Time Left: $(format_time $i)"
+        echo -ne "\r⏳ Time Left: $(format_time $i) $(progress_bar "$total_time" $i)"
         delete_line
 
         # listen for interrupt every 1 s
@@ -44,7 +56,16 @@ start_timer() {
     bash bin/notify.sh complete
 
     # Log the session in the file
-    save_session "$type" "$WORK_DURATION"
+    if [[ $type == "Pomodoro" ]]; then
+        save_session "$type" "$WORK_DURATION"
+    elif [[ $type == "Short_break" ]]; then
+        save_session "$type" "$SHORT_BREAK"
+    elif [[ $type == "Long_break" ]]; then
+        save_session "$type" "$LONG_BREAK"
+    else
+        echo "⚠️ Unknown session type: $type"
+    fi
+
     return
 }
 
@@ -68,6 +89,24 @@ format_time() {
     local minutes=$((total_seconds / 60))
     local seconds=$((total_seconds % 60))
     printf "%02d:%02d\n" "$minutes" "$seconds"
+}
+
+progress_bar() {
+    local total=$1
+    local current=$2
+    local width=20                              # Length of the progress bar
+    local filled=$(((current * width) / total)) # Filled part
+    local empty=$((width - filled))             # Empty part
+    local percent=$(((current * 100) / total))  # Percentage
+
+    # Bar
+    local bar="|"
+    for ((i = 0; i < filled; i++)); do bar+="▰"; done
+    for ((i = 0; i < empty; i++)); do bar+=" "; done
+    bar+="|"
+
+    # Print progress bar with percentage
+    echo -e "$bar $percent%"
 }
 
 pause_timer() {

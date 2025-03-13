@@ -39,7 +39,7 @@ start_pomodoro() {
     # sleep 1 #For the notifications to finish playing -> Better UX
     clear
 
-    # Start Long Break after every SESSION_COUNT sessions
+    # Start Long Break after every X (session_count) sessions
     if ((session_num % SESSION_COUNT == 0)); then
       bash bin/notify.sh start
       start_timer "$LONG_BREAK" "Long_break"
