@@ -81,7 +81,7 @@ get_input() {
 }
 
 print_separator() {
-    echo -e "──────────────────────────────────────"
+    echo -e "──────────────────────────────────────────────────"
 }
 
 format_time() {
@@ -137,14 +137,14 @@ resume_timer() {
 }
 
 # For Testing
-if [[ -n "${1:-}" ]]; then
-    case "$1" in
-    start)
-        start_timer 10
-        ;; # Example: 10s
-    pause) pause_timer ;;
-    resume) resume_timer ;;
-    stop) echo "Timer stopped." ;;
-    *) echo "Usage: $0 {start|pause|resume|stop}" ;;
-    esac
-fi
+# if [[ -n "${1:-}" ]]; then
+#     case "$1" in
+#     start)
+#         start_timer 10
+#         ;; # Example: 10s
+#     pause) pause_timer ;;
+#     resume) resume_timer ;;
+#     stop) echo "Timer stopped." ;;
+#     *) echo "Invalid Option" ;;
+#     esac
+# fi
