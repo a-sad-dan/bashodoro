@@ -13,38 +13,66 @@ source "$CONFIG_FILE"
 # shellcheck disable=SC1091
 source "./bin/timer.sh"
 
+print_logo() {
+  echo -e "                                                
+                █████████████████                
+               ██               ██               
+               ██               ██               
+               ██               ██               
+            ██   ███         ███                 
+              ██   ███     ███                   
+                ██    █████                      
+                ██    █████                      
+              ██   ███     ███                   
+            ██   ███         ███                 
+               ██               ██               
+               ██  ███████████  ██               
+               ██               ██               
+                █████████████████                
+"
+}
+
 # Helper function for usage instructions
 help() {
-  echo "bashodoro - A simple Bash-based Pomodoro timer"
-  echo ""
-  echo "Usage: bashodoro -> Starts a bashodoro session with the default config"
+
+  print_logo
+  echo "Bashodoro - Your Productivity Timer"
+  echo "Quick Start: ./bashodoro.sh"
   echo ""
   echo "Options:"
-  echo "  -s, --stats       show the statistics of sessions"
-  echo "  -c, --config              show the current config"
-  echo "  -h, --help                 Show this help message"
-  echo "  ^c, cmd c                        Quit the Program"
+  echo "  -m, --manual      Start in manual mode (no auto-start)"
+  echo "  -s, --stats                    Show session statistics"
+  echo "  -c, --config          Display current configuration"
+  echo "  -h, --help            Show this help message"
+  echo "  Ctrl+C, Cmd+C         Quit the program"
+
   echo ""
   exit 1
 }
 
 start_pomodoro() {
 
+  print_logo
+  echo "Bashodoro - Your Productivity Timer"
+  sleep 1.5 #For the notifications to finish playing -> Better UX
+  clear
+
   local session_num
-  session_num=$(($(get_session_num) + 1))
 
   while true; do
+    session_num=$(($(get_session_num) + 1)) #FIX : Get session number in each loop
+
     bash bin/notify.sh start
     start_timer "$WORK_DURATION" "Pomodoro"
 
-    # sleep 1 #For the notifications to finish playing -> Better UX
     clear
+
     if (! $AUTO_MODE); then
       manual_mode_prompt "Break Session"
     fi
 
     # Start Long Break after every X (session_count) sessions
-    if ((session_num % SESSION_COUNT == 0)); then
+    if (((session_num % SESSION_COUNT) == 0)); then
       bash bin/notify.sh start
       start_timer "$LONG_BREAK" "Long_break"
 
