@@ -20,8 +20,9 @@ help() {
   echo ""
   echo "Options:"
   echo "  -s, --stats       show the statistics of sessions"
-  echo "  -c, --config               show the current config"
-  echo "  -h, --help            Show this help message"
+  echo "  -c, --config              show the current config"
+  echo "  -h, --help                 Show this help message"
+  echo "  ^c, cmd c                        Quit the Program"
   echo ""
   exit 1
 }
@@ -38,8 +39,8 @@ start_pomodoro() {
     # sleep 1 #For the notifications to finish playing -> Better UX
     clear
 
-    # Start Long Break after every 4 sessions
-    if ((session_num % 4 == 0)); then
+    # Start Long Break after every SESSION_COUNT sessions
+    if ((session_num % SESSION_COUNT == 0)); then
       bash bin/notify.sh start
       start_timer "$LONG_BREAK" "Long_break"
 
@@ -64,7 +65,7 @@ else
     help
     ;;
   --stats | -s)
-    echo "Show the history"
+    echo "Show the statistics from logs"
     ;;
   --config | -c)
     echo "Show the config"
