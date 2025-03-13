@@ -6,6 +6,12 @@ CONFIG_FILE="config/settings.conf"
 # shellcheck disable=SC1090
 source "$CONFIG_FILE"
 
+# Load timer.sh functions
+# shellcheck disable=SC1091
+source "./bin/timer.sh"
+
+# Load session.sh to get the session number
+
 # Helper function for usage instructions
 help() {
   echo "bashodoro - A simple Bash-based Pomodoro timer"
@@ -20,9 +26,38 @@ help() {
   exit 1
 }
 
+start_pomodoro() {
+
+  local session_num
+  session_num=$(($(get_session_num) + 1))
+
+  while true; do
+    bash bin/notify.sh start
+    start_timer "$WORK_DURATION" "Pomodoro"
+
+    # sleep 1 #For the notifications to finish playing -> Better UX
+    clear
+
+    # Start Long Break after every 4 sessions
+    if ((session_num % 4 == 0)); then
+      bash bin/notify.sh start
+      start_timer "$LONG_BREAK" "Long_break"
+
+    # Take a short break
+    else
+      bash bin/notify.sh start
+      start_timer "$SHORT_BREAK" "Short_break"
+    fi
+
+    # sleep 1
+    clear
+
+  done
+}
+
 # Argument parsing
 if [[ $# -eq 0 ]]; then
-  bash bin/timer.sh start
+  start_pomodoro
 else
   case "$1" in
   --help | -h)
