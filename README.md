@@ -1,44 +1,72 @@
 # Bashodoro
 
-A Bash script for implementing the Pomodoro Technique in the terminal.
+A Bash-based implementation of the Pomodoro Technique, providing an efficient and configurable time management system within the terminal environment.
 
 ## Overview
 
-The **Pomodoro Technique** is a time management method developed by Francesco Cirillo in the late 1980s. It involves breaking work into intervals, traditionally **25 minutes of focused work** (a "Pomodoro") followed by a **5-minute break**. After completing **four Pomodoros**, a longer break (15–30 minutes) is taken.
+The **Pomodoro Technique**, pioneered by Francesco Cirillo in the late 1980s, is a structured time management methodology designed to enhance productivity by segmenting work into **25-minute focused intervals** (Pomodoros), interspersed with **5-minute short breaks**. After the completion of four consecutive Pomodoros, a **longer break of 15–30 minutes** is introduced to facilitate cognitive recovery.
 
-**Bashodoro** automates this technique by:
-- Timing work and break intervals automatically.
-- Sending notifications to handle distractions.
-- Tracking progress and logging completed sessions.
-- Allowing customization of intervals to match individual workflows.
+**Bashodoro** automates this methodology through:
 
-## Key Features
+- Programmatically timed work and break intervals.
+- Adaptive notification mechanisms to mitigate distractions.
+- Comprehensive session tracking with statistical insights.
+- Flexible configuration parameters to accommodate diverse workflows.
+- A streamlined command-line interface optimized for minimal resource utilization.
 
-1. **Customizable Intervals**
-   - Set work, short break, and long break durations.
-   - Defaults: **Work = 25 min, Short Break = 5 min, Long Break = 15 min**.
+## Features
 
-2. **Session Tracking**
-   - Track completed work sessions.
-   - Automatically start a long break after every 4 work sessions.
+### ⏳ Configurable Time Intervals
+- Define custom work, short break, and long break durations.
+- Default settings: **Work = 25 min, Short Break = 5 min, Long Break = 15 min**.
 
-3. **Notifications**
-   - Alerts when sessions start and end using `notify-send` (Linux) or sound effects.
+### 📊 Advanced Session Tracking
+- Logs completed work intervals.
+- Automatically schedules long breaks after every four Pomodoros.
 
-4. **Progress Display**
-   - Show a countdown timer or progress bar in the terminal.
+### 🔔 Multi-Platform Notifications
+- Desktop notifications utilizing:
+  - `notify-send` (Linux)
+  - `osascript` (macOS)
+  - `-Command` (Windows PowerShell)
+- Acoustic alerts leveraging:
+  - `afplay` (macOS)
+  - `paplay` (Linux)
+  - `aplay` (Linux)
 
-5. **Pause & Resume**
-   - Press **p** to pause and **r** to resume a session.
+### 📟 Real-Time Progress Monitoring
+- Terminal-integrated countdown timer and progress bar.
 
-6. **Skip Session**
-   - Press **s** to skip the current session.
+### ⏸️ Pause, Resume, and Session Skipping
+- **Pause/Resume:** Press **p** to pause, **r** to resume.
+- **Skip:** Press **s** to advance to the next session.
+- **Quit:** Press **q** to terminate the script.
 
-7. **Statistics & Logging**
-   - Log session data for productivity analysis.
+### 📈 Productivity Analytics
+- Comprehensive session logging and performance analysis.
+- Automatically generated productivity reports (daily/weekly).
+- **Key Metrics Tracked:**
+  - Aggregate Pomodoro count
+  - Total work duration (hours and minutes)
+  - Time allocation for short and long breaks
+  - Productivity streak analysis
+  - Average session length
+  - Frequency of skipped and paused sessions
+  - Trends in daily and weekly productivity
 
-8. **Help Menu**
-   - Press **h** to display usage instructions.
+### ⚙️ Customization via Configuration File
+- **`settings.conf`** allows fine-tuning of:
+  - Notification preferences
+  - Sound settings
+  - Break intervals
+  - Long break frequency
+  - Work session durations
+
+### 🌙 Optimized Terminal UI
+- Lightweight, distraction-free interface.
+
+### 🆘 Integrated Help Menu
+- Use `-h` or `--help` for contextual usage instructions.
 
 ## Installation
 
@@ -47,61 +75,80 @@ The **Pomodoro Technique** is a time management method developed by Francesco Ci
    git clone https://github.com/a-sad-dan/bashodoro.git
    cd bashodoro
    ```
-2. Make the script executable:
+2. Grant execution permissions:
    ```bash
    chmod +x bashodoro.sh
    ```
-3. Run the script:
+3. Execute the script:
    ```bash
    ./bashodoro.sh
    ```
 
 ## Usage
 
-Run the script with optional arguments to customize session durations:
-   ```bash
-   ./bashodoro.sh --work 30 --short-break 10 --long-break 20
-   ```
+Execute the script with optional parameters:
 
-### Available Commands
+```bash
+./bashodoro.sh [OPTIONS]
+```
 
-- **Pause/Resume**: Press **p** to pause, **r** to resume.
-- **Skip Session**: Press **s** to skip.
-- **Help Menu**: Press **h** for instructions.
+### Command-Line Options
 
-## Technical Details
+- **Manual Mode:** `-m, --manual` Start without automatic session initiation.
+- **Statistics Display:** `-s, --stats` Show detailed session statistics.
+- **Configuration Overview:** `-c, --config` Display current parameter settings.
+- **Help Menu:** `-h, --help` Display command usage and options.
+- **Exit Command:** `Ctrl+C` (Linux/macOS) or `Cmd+C` (Windows) to quit.
 
-### Tools & Libraries Used
-- `notify-send` for desktop notifications (Linux).
-- `paplay` or `mpg123` for sound alerts.
-- `sleep` or `date` for timer functionality.
-- `printf` or `tput` for terminal-based progress display.
+## System Dependencies
 
-### Script Structure
+- `notify-send` (Linux), `osascript` (macOS), `-Command` (Windows PowerShell) for desktop notifications.
+- `afplay` (macOS), `paplay` (Linux), `aplay` (Linux) for acoustic alerts.
+- `sleep` or `date` for interval timing execution.
 
-#### Variables
-- Define session durations, session counts, and notification settings.
+## Project Structure
 
-#### Functions
-- **start_session**: Starts a work or break session.
-- **notify_user**: Sends notifications.
-- **display_timer**: Shows a countdown timer.
-- **pause_session**: Pauses the current session.
-- **skip_session**: Skips the current session.
-- **log_statistics**: Logs session data to a file.
+```
+.
+|-- README.md
+|-- audio
+|-- bashodoro.sh
+|-- bin
+|   |-- notify.sh
+|   |-- session.sh
+|   `-- timer.sh
+|-- config
+|   `-- settings.conf
+|-- logo.png
+|-- logo_dark.png
+|-- logs
+|   `-- bashodoro.log
+|-- sounds
+|   |-- jokingly.ogg
+|   |-- jokingly.wav
+|   |-- joyous.ogg
+|   |-- joyous.wav
+|   |-- light-hearted.ogg
+|   |-- light-hearted.wav
+|   |-- slick.ogg
+|   `-- slick.wav
+|-- tests
+|   |-- test_notify.sh
+|   `-- test_timer.sh
+`-- uninstall.sh
+```
 
-#### Main Loop
-- Alternates between work and break sessions using a `while` loop.
+## Contributing
 
-## Deliverables
+Contributions are encouraged and appreciated. To contribute:
 
-- **Bash Script**: A fully functional `bashodoro.sh` script.
-- **Documentation**: A well-structured `README.md` with installation, usage, and features.
-- **Testing**:
-  - Test cases for different systems.
-  - Use `shellcheck` for script validation.
-- **Optional Enhancements**:
-  - GUI integration using `zenity` or `dialog`.
-  - Remote control via SSH.
-  - Web-based dashboard for tracking progress.
+1. **Fork** the repository.
+2. **Create a feature branch** for your implementation.
+3. **Develop and test** modifications locally.
+4. **Submit a pull request** with a concise summary of changes.
+
+For significant modifications, please initiate an issue discussion beforehand.
+
+---
+**Bashodoro** is a robust, extensible, and lightweight productivity tool designed for efficiency-focused terminal users. Stay productive and optimize your workflow!
 
