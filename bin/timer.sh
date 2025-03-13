@@ -27,7 +27,7 @@ start_timer() {
     fi
 
     for ((i = duration; i >= 1; i--)); do
-        echo -ne "\r⏳ Time Left: $i"
+        echo -ne "\r⏳ Time Left: $(format_time $i)"
         delete_line
 
         # listen for interrupt every 1 s
@@ -63,15 +63,21 @@ print_separator() {
     echo -e "──────────────────────────────────────"
 }
 
+format_time() {
+    local total_seconds=$1
+    local minutes=$((total_seconds / 60))
+    local seconds=$((total_seconds % 60))
+    printf "%02d:%02d\n" "$minutes" "$seconds"
+}
+
 pause_timer() {
     clear
     print_separator
-    echo " "
     paused_time=$1
     type=$2
 
     echo "⏸ Timer Paused "
-    echo "🕒 $type | $paused_time left"
+    echo "🕒 $type | $(format_time "$paused_time") left"
     echo "Press [r] to Resume the timer"
 
     while true; do
@@ -88,6 +94,7 @@ resume_timer() {
     # Clear the terminal and start the timer again for now
     clear
     start_timer "$1" "$2"
+
 }
 
 # For Testing
