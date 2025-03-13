@@ -8,7 +8,7 @@ notificationSound() {
   if command -v paplay &>/dev/null; then
     paplay sounds/"$1" & # Linux (PulseAudio) -> Fixed Blocking of script
   elif command -v afplay &>/dev/null; then
-    afplay sounds/"$1" # macOS (Built-in)
+    afplay sounds/"$1" & # macOS (Built-in)
     #elif command -v powershell.exe &>/dev/null; then
     #powershell.exe -c (New-Object Media.SoundPlayer 'sounds\"$1"').PlaySync()  # Windows
   else
