@@ -2,12 +2,24 @@
 
 set -euo pipefail
 
+# shellcheck disable=SC1091
+source "./bin/session.sh"
+
+# shellcheck disable=SC1091
+source "./config/settings.conf"
+
 start_timer() {
+    # get the session number
+    local session
+    session=$(($(get_session_num) + 1))
+
     local duration="$1"
-    echo "Time left Until Break"
+    local type="$2" #Pomodoro #Short_break #Long_break
+    echo "Session Number : $session"
+    echo "press p to pause the timer"
 
     for ((i = duration; i >= 0; i--)); do
-        echo -ne "\r$i"
+        echo -ne "\rTime Left : $i"
         delete_line
 
         # listen for interrupt every 1 s
@@ -15,13 +27,17 @@ start_timer() {
 
         if [[ $keyPress == "p" || $keyPress == "P" ]]; then
             bash bin/notify.sh pause
-            pause_timer "$i"
+            pause_timer "$i" "$type"
             return
         fi
     done
+
+    # This marks the session as complete
     bash bin/notify.sh complete
-    echo
-    exit 0
+    
+    # Log the session in the file
+    save_session "$type" "$WORK_DURATION"
+    return
 }
 
 # Todo - put these functions in a utility file
@@ -38,31 +54,36 @@ get_input() {
 pause_timer() {
     echo ""
     paused_time=$1
-    echo "Timer paused at $paused_time, press r to resume"
+    type=$2
+
+    echo "Timer paused at $paused_time for $type"
+    echo "press r to resume"
 
     while true; do
         key=$(get_input)
         if [[ $key == "r" || $key == "R" ]]; then
             bash bin/notify.sh resume
-            resume_timer "$paused_time"
+            resume_timer "$paused_time" "$type"
+            break
         fi
     done
 }
 
 resume_timer() {
-    clear
-    start_timer "$1"
     # Clear the terminal and start the timer again for now
-
+    clear
+    start_timer "$1" "$2"
 }
 
-case "$1" in
-start)
-    bash bin/notify.sh start
-    start_timer 10
-    ;; # Example: 10s
-pause) pause_timer ;;
-resume) resume_timer ;;
-stop) echo "Timer stopped." ;;
-*) echo "Usage: $0 {start|pause|resume|stop}" ;;
-esac
+# For Testing
+if [[ -n "${1:-}" ]]; then
+    case "$1" in
+    start)
+        start_timer 10
+        ;; # Example: 10s
+    pause) pause_timer ;;
+    resume) resume_timer ;;
+    stop) echo "Timer stopped." ;;
+    *) echo "Usage: $0 {start|pause|resume|stop}" ;;
+    esac
+fi
