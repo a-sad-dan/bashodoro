@@ -3,11 +3,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 set -euo pipefail
 
-LOG_FILE="$SCRIPT_DIR/logs/bashodoro.log"
+# Per-user logs
+LOG_DIR="$HOME/.bashodoro/logs"
+LOG_FILE="$LOG_DIR/bashodoro.log"
 
+# Ensure the logs directory exists
+mkdir -p "$LOG_DIR"
+
+# Ensure the log file exists
 if [[ ! -f $LOG_FILE ]]; then
-  echo -e "Log Not file found, Creating Log File"
-  mkdir logs
+  echo "Log file not found, creating log file at $LOG_FILE"
   touch "$LOG_FILE"
 fi
 
@@ -17,12 +22,10 @@ save_session() {
 
   # Append log entry to file
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$type] [$duration]" >>"$LOG_FILE"
-
-  # echo "Session saved successully in Logs"
 }
 
 get_session_num() {
-  #logic -> see the number of entries having the same date as today's date -> return the number
+  # Logic: count the number of Pomodoro entries with today's date
   local today
   today=$(date '+%Y-%m-%d')
 
