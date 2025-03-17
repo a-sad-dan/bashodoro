@@ -68,6 +68,9 @@ The **Pomodoro Technique**, pioneered by Francesco Cirillo in the late 1980s, is
 ### 🆘 Integrated Help Menu
 - Use `-h` or `--help` for contextual usage instructions.
 
+Here’s the updated **Installation** and **Usage** sections, now including log storage details:
+
+
 ## Installation
 
 1. Clone the repository:
@@ -75,31 +78,61 @@ The **Pomodoro Technique**, pioneered by Francesco Cirillo in the late 1980s, is
    git clone https://github.com/a-sad-dan/bashodoro.git
    cd bashodoro
    ```
-2. Grant execution permissions:
+
+2. Run the installation script (requires root privileges):
    ```bash
-   chmod +x bashodoro.sh
+   sudo ./install.sh
    ```
-3. Execute the script:
+
+3. Start **Bashodoro**:
    ```bash
-   ./bashodoro.sh
+   bashodoro
    ```
+
+4. To uninstall, use:
+   ```bash
+   sudo ./uninstall.sh
+   ```
+
 
 ## Usage
 
-Execute the script with optional parameters:
+Once installed, you can run **Bashodoro** with:
 
 ```bash
-./bashodoro.sh [OPTIONS]
+bashodoro [OPTIONS]
 ```
 
-### Command-Line Options
+**Command-Line Options:**
 
-- **Manual Mode:** `-m, --manual` Start without automatic session initiation.
-- **Statistics Display:** `-s, --stats` Show detailed session statistics.
-- **Configuration Overview:** `-c, --config` Display current parameter settings.
-- **Help Menu:** `-h, --help` Display command usage and options.
-- **Exit Command:** `Ctrl+C` (Linux/macOS) or `Cmd+C` (Windows) to quit.
+| Option             | Description                                         |
+|--------------------|-----------------------------------------------------|
+| `-m, --manual`    | Start without automatic session initiation.         |
+| `-s, --stats`     | Show detailed session statistics.                   |
+| `-c, --config`    | Display current parameter settings.                 |
+| `-h, --help`      | Show help menu with usage instructions.             |
+| `Ctrl+C`          | Quit the script (Linux/macOS).                      |
 
+
+## Logs
+
+Bashodoro maintains session logs for tracking your productivity.  
+**Log files are stored per user at:**
+```
+$HOME/.bashodoro/logs/bashodoro.log
+```
+To view the logs, use:
+```bash
+cat $HOME/.bashodoro/logs/bashodoro.log
+```
+To clear logs:
+```bash
+> $HOME/.bashodoro/logs/bashodoro.log
+```
+
+---
+
+Let me know if you need any more tweaks! 🚀
 ## System Dependencies
 
 - `notify-send` (Linux), `osascript` (macOS), `-Command` (Windows PowerShell) for desktop notifications.
