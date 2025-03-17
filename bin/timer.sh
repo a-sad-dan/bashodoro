@@ -1,12 +1,13 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 set -euo pipefail
 
 # shellcheck disable=SC1091
-source "./bin/session.sh"
+source "$SCRIPT_DIR/bin/session.sh"
 
 # shellcheck disable=SC1091
-source "./config/settings.conf"
+source "$SCRIPT_DIR/config/settings.conf"
 
 start_timer() {
     # get the session number

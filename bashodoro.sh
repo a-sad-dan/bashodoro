@@ -1,17 +1,29 @@
 #! /bin/bash
-set -euo pipefail # Safe scripting
 
-# Automatic mode is set by default
+# Get the directory where the script is located
+# SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+
+cd "$SCRIPT_DIR" || exit 1 # Ensure that the script is always called from the directory
+
+# Set default values
+WORK_DURATION=25
+SHORT_BREAK=5
+LONG_BREAK=15
 AUTO_MODE=true
 
-# Load configuration
-CONFIG_FILE="config/settings.conf"
-# shellcheck disable=SC1090
-source "$CONFIG_FILE"
+set -euo pipefail # Safe scripting
 
-# Load timer.sh functions (session.sh is included inside)
+# Load configuration and config files
 # shellcheck disable=SC1091
-source "./bin/timer.sh"
+source "$SCRIPT_DIR/config/settings.conf"
+
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/bin/timer.sh"
+
+# shellcheck disable=SC1091
+# Load Session.sh
+source "$SCRIPT_DIR/bin/session.sh"
 
 print_logo() {
   echo -e "                                                
@@ -62,7 +74,7 @@ start_pomodoro() {
   while true; do
     session_num=$(($(get_session_num) + 1)) #FIX : Get session number in each loop
 
-    bash bin/notify.sh start
+    bash "$SCRIPT_DIR/bin/notify.sh" start
     start_timer "$WORK_DURATION" "Pomodoro"
 
     clear
@@ -73,12 +85,12 @@ start_pomodoro() {
 
     # Start Long Break after every X (session_count) sessions
     if (((session_num % SESSION_COUNT) == 0)); then
-      bash bin/notify.sh start
+      bash "$SCRIPT_DIR/bin/notify.sh" start
       start_timer "$LONG_BREAK" "Long_break"
 
     # Take a short break
     else
-      bash bin/notify.sh start
+      bash "$SCRIPT_DIR/bin/notify.sh" start
       start_timer "$SHORT_BREAK" "Short_break"
     fi
 

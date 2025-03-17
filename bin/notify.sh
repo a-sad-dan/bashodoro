@@ -1,4 +1,5 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 set -euo pipefail
 
@@ -6,9 +7,9 @@ set -euo pipefail
 
 notificationSound() {
   if command -v paplay &>/dev/null; then
-    paplay sounds/"$1" & # Linux (PulseAudio) -> Fixed Blocking of script
+    paplay "$SCRIPT_DIR/sounds/$1" & # Linux (PulseAudio) -> Fixed Blocking of script
   elif command -v afplay &>/dev/null; then
-    afplay sounds/"$1" & # macOS (Built-in)
+    afplay "$SCRIPT_DIR/sounds/$1" & # macOS (Built-in)
     #elif command -v powershell.exe &>/dev/null; then
     #powershell.exe -c (New-Object Media.SoundPlayer 'sounds\"$1"').PlaySync()  # Windows
   else
@@ -20,7 +21,7 @@ sendNotification() {
   message="${1:-Task Completed!}" # Use first argument or default message
 
   if command -v notify-send &>/dev/null; then
-    notify-send -i "$(realpath ./logo.png)" \
+    notify-send -i "$SCRIPT_DIR/logo.png" \
       -t 1000 \
       -a "Bashodoro" \
       "Bashodoro" "$message"

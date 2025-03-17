@@ -1,10 +1,13 @@
 #!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 set -euo pipefail
-LOG_FILE="./logs/bashodoro.log"
+
+LOG_FILE="$SCRIPT_DIR/logs/bashodoro.log"
 
 if [[ ! -f $LOG_FILE ]]; then
   echo -e "Log Not file found, Creating Log File"
+  mkdir logs
   touch "$LOG_FILE"
 fi
 
