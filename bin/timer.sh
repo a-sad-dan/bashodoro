@@ -10,12 +10,25 @@ source "$SCRIPT_DIR/bin/session.sh"
 source "$SCRIPT_DIR/config/settings.conf"
 
 start_timer() {
+
+    # Handle Quits in the middle
+    trap 'handle_quit $type $duration' EXIT
+
     # get the session number
     local session
     session=$(($(get_session_num) + 1))
 
     local duration="$1"
     local type="$2" #Pomodoro #Short_break #Long_break
+
+    # Find duration from type
+    if [[ $type = "Pomodoro" ]]; then
+        duration=$WORK_DURATION
+    elif [[ $type = "Short_break" ]]; then
+        duration=$SHORT_BREAK
+    elif [[ $type = "Long_break" ]]; then
+        duration=$LONG_BREAK
+    fi
 
     # Determine total_time based on type from the sourced config file
     local total_time
@@ -39,6 +52,11 @@ start_timer() {
         echo "🌿 Time for a long break! Step away and recharge."
     fi
 
+    # Log the start of the timer
+    save_session "$type" "$duration" "Start"
+
+    # Start the timer
+
     for ((i = duration; i >= 1; i--)); do
         echo -ne "\r⏳ Time Left: $(format_time $i) $(progress_bar "$total_time" $i)"
         delete_line
@@ -57,17 +75,29 @@ start_timer() {
     bash bin/notify.sh complete
 
     # Log the session in the file
-    if [[ $type == "Pomodoro" ]]; then
-        save_session "$type" "$WORK_DURATION"
-    elif [[ $type == "Short_break" ]]; then
-        save_session "$type" "$SHORT_BREAK"
-    elif [[ $type == "Long_break" ]]; then
-        save_session "$type" "$LONG_BREAK"
-    else
-        echo "⚠️ Unknown session type: $type"
-    fi
+    save_session "$type" "$duration" "End"
 
     return
+}
+
+handle_quit() {
+    # take type and duration from the file
+    local type=$1
+    local duration=$2
+
+    bash bin/notify.sh stop
+    save_session "$type" "$duration" "Interrupt" # Log the session in the file
+
+    # print logo for 1.5 seconds
+    clear
+    print_logo
+
+    echo "Quitting Bashodoro..."
+    sleep 1
+
+    # clear the terminal and exit
+    clear
+    exit 0
 }
 
 # Todo - put these functions in a utility file
