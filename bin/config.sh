@@ -8,6 +8,7 @@ SETTING_CONF="$CONFIG_DIR/settings.conf"
 set -ueo pipefail   #error handeling
 
 # Function to update configuration settings in settings.conf
+
 update_config() {
     local key="$1"
     local value="$2"
