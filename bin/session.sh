@@ -34,6 +34,6 @@ get_session_num() {
   local today
   today=$(date '+%Y-%m-%d')
 
-  sess_num=$(grep "$today" "$LOG_FILE" | grep -c "\[Pomodoro\]")
+  sess_num=$(grep "$today" "$LOG_FILE" | grep -c "\[Pomodoro\] [End]")   # <-- fixed bug of session count 
   echo "$sess_num"
 }
