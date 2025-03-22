@@ -138,6 +138,9 @@ else
     ;;
   --stats | -s)
     echo "Show the statistics from logs"
+    # shellcheck disable=SC1091
+    #Load stats.sh
+    source "$SCRIPT_DIR/bin/stats.sh"
     exit 0
     ;;
   --config | -c)
