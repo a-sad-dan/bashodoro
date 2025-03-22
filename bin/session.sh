@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# shellcheck disable=SC2034
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 set -euo pipefail
@@ -17,11 +19,14 @@ if [[ ! -f $LOG_FILE ]]; then
 fi
 
 save_session() {
-  local type="$1"     # Long_break, Short_break, Pomodoro
-  local duration="$2" # Duration in seconds
+  local session_type="$1" # Long_break, Short_break, Pomodoro
+  local duration="$2"     # Duration in seconds
+
+  # Add type and duration to the log file
+  local signal="$3" #Start, End, Interrupt
 
   # Append log entry to file
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$type] [$duration]" >>"$LOG_FILE"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$session_type] [$signal] [$duration]" >>"$LOG_FILE"
 }
 
 get_session_num() {
