@@ -5,10 +5,6 @@ CONFIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../config" && pwd)"
 DEFAULT_CONF="$CONFIG_DIR/bashodoro.conf"
 SETTING_CONF="$CONFIG_DIR/settings.conf"
 
-# Enable strict error handling
-# -u: Treat unset variables as an error
-# -e: Exit immediately if a command fails
-# -o pipefail: If any command in a pipeline fails, the entire pipeline fails
 set -ueo pipefail  
 
 # Function to display the main configuration menu
