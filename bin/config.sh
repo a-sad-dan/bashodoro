@@ -5,7 +5,22 @@ CONFIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../config" && pwd)"
 DEFAULT_CONF="$CONFIG_DIR/bashodoro.conf"
 SETTING_CONF="$CONFIG_DIR/settings.conf"
 
-set -ueo pipefail  
+set -ueo pipefail   #error handeling
+
+# Function to update configuration settings in settings.conf
+
+update_config() {
+    local key="$1"
+    local value="$2"
+    local file="$SETTING_CONF"  # Update settings.conf instead of bashodoro.conf
+
+    # If key exists in file, update it; otherwise, add it
+    if grep -q "^$key=" "$file"; then
+        sed -i "s/^$key=.*/$key=$value/" "$file"
+    else
+        echo "$key=$value" >> "$file"
+    fi
+}
 
 # Function to display the main configuration menu
 show_menu() {
