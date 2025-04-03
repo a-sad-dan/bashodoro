@@ -34,6 +34,7 @@ calculate_stats() {
     pomodoro_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Pomodoro\] \[End\]")
     short_break_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Short_break\] \[End\]")
     long_break_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Long_break\] \[End\]")
+    interrupts_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Pomodoro\] \[Interrupt\]")
 
     # echo "Pomodoro count: $pomodoro_count"
     # echo "Short break count: $short_break_count"
@@ -48,38 +49,77 @@ calculate_stats() {
     set -e # re-enable
 }
 
+format_time() {
+    local total_seconds="$1"
+    local hours=$((total_seconds / 3600))
+    local minutes=$(((total_seconds % 3600) / 60))
+    local seconds=$((total_seconds % 60))
+    printf "%02dh %02dm %02ds" "$hours" "$minutes" "$seconds"
+}
 display_stats() {
     local label="$1"
-    echo "----- $label Stats -----"
-    echo "Total Work time: $pomodoros seconds"
-    echo "Total Short breaks: $short_breaks seconds"
-    echo "Long breaks: $long_breaks seconds"
-    echo ""
+    echo -e "===================================="
+    echo -e "📊 $label Stats"
+    echo -e "===================================="
+    echo -e "✔ Total Work Time: $(format_time "$pomodoros")"
+    echo -e "☕ Total Short Breaks: $(format_time "$short_breaks")"
+    echo -e "💤 Long Breaks: $(format_time "$long_breaks")"
+    echo -e "⚠ Total Interrupts: $interrupts_count"
+    echo -e "====================================\n"
 }
 
-# Calculate and display daily stats
-today=$(date '+%Y-%m-%d')
-calculate_stats "$today" "$today"
-display_stats "Today's"
+show_menu() {
+    while true; do
+        echo -e "\033[1;35mSelect the stats you want to see:\033[0m"
+        echo "1) Today's Stats"
+        echo "2) Weekly Stats"
+        echo "3) Monthly Stats"
+        echo "4) Total Stats"
+        echo "5) Exit"
+        read -rp "Enter your choice: " choice
 
-# Calculate and display weekly stats
-if [[ "$(uname)" == "Linux" ]]; then
-    week_start=$(date -d "6 days ago" '+%Y-%m-%d') # Linux-compatible
-else
-    week_start=$(date -v -6d '+%Y-%m-%d') # macOS-compatible
-fi
-calculate_stats "$week_start" "$today"
-display_stats "Weekly"
+        clear
 
-# Calculate and display monthly stats
-if [[ "$(uname)" == "Linux" ]]; then
-    month_start=$(date -d "$(date +%Y-%m-01)" '+%Y-%m-%d') # Linux-compatible
-else
-    month_start=$(date -v1d '+%Y-%m-%d') # macOS-compatible
-fi
-calculate_stats "$month_start" "$today"
-display_stats "Monthly"
+        case $choice in
+            1)
+                today=$(date '+%Y-%m-%d')
+                calculate_stats "$today" "$today"
+                display_stats "Today's"
+                ;;
+            2)
+                if [[ "$(uname)" == "Linux" ]]; then
+                    week_start=$(date -d "6 days ago" '+%Y-%m-%d')
+                else
+                    week_start=$(date -v -6d '+%Y-%m-%d')
+                fi
+                calculate_stats "$week_start" "$today"
+                display_stats "Weekly"
+                ;;
+            3)
+                if [[ "$(uname)" == "Linux" ]]; then
+                    month_start=$(date -d "$(date +%Y-%m-01)" '+%Y-%m-%d')
+                else
+                    month_start=$(date -v1d '+%Y-%m-%d')
+                fi
+                calculate_stats "$month_start" "$today"
+                display_stats "Monthly"
+                ;;
+            4)
+                calculate_stats "" ""
+                display_stats "Total"
+                ;;
+            5)
+                echo "Exiting..."
+                exit 0
+                ;;
+            *)
+                echo -e "\033[1;31mInvalid choice! Please select a valid option.\033[0m"
+                ;;
+        esac
+        read -n 1 -sp "enter any key to continue to main menu"
+        echo ""
+        clear
+    done
+}
 
-# Calculate and display total stats
-calculate_stats "" ""  # No date filter to count all
-display_stats "Total"
+show_menu
