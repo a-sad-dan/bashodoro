@@ -12,7 +12,7 @@ source "$SCRIPT_DIR/config/settings.conf"
 start_timer() {
 
     # Handle Quits in the middle
-    trap 'handle_quit $type $duration' EXIT
+    trap 'handle_quit $type $i' EXIT     # to log the time left when interrupted
 
     # get the session number
     local session
