@@ -144,7 +144,7 @@ else
     exit 0
     ;;
   --config | -c)
-    echo "Show the config"
+    source "$SCRIPT_DIR/bin/config.sh"
     exit 0
     ;;
   *)
