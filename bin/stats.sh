@@ -31,20 +31,29 @@ calculate_stats() {
     fi
 
     #counts
-    pomodoro_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Pomodoro\] \[End\]")
-    short_break_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Short_break\] \[End\]")
-    long_break_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Long_break\] \[End\]")
-    interrupts_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Pomodoro\] \[Interrupt\]")
+    pomodoro_time=$(egrep "$filter" "$LOG_FILE" | grep "\[Pomodoro\] \[Start\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}' )
+    short_break_time=$(egrep "$filter" "$LOG_FILE" | grep "\[Short_break\] \[Start\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}' )
+    long_break_time=$(egrep "$filter" "$LOG_FILE" | grep "\[Long_break\] \[Start\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}' )
+    pomodoro_interrupts_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Pomodoro\] \[Interrupt\]")
+    short_break_interrupts_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Short_break\] \[Interrupt\]")
+    long_break_interrupts_count=$(egrep "$filter" "$LOG_FILE" | grep -c "\[Long_break\] \[Interrupt\]")
+    pomodoro_left_interrupt=$(egrep "$filter" "$LOG_FILE" | grep "\[Pomodoro\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}' )
+    short_left_interrupt=$(egrep "$filter" "$LOG_FILE" | grep "\[Short_break\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}' )
+    long_left_interrupt=$(egrep "$filter" "$LOG_FILE" | grep "\[Long_break\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}' )
 
     # echo "Pomodoro count: $pomodoro_count"
     # echo "Short break count: $short_break_count"
     # echo "Long break count: $long_break_count"
     # Use global variables for access in display_stats
-
+    echo -e "\n debug \n"
+    echo "$pomodoro_left_interrupt"
+    echo "$short_left_interrupt"
+    echo "$long_left_interrupt"
+    echo ""
     # total time in seconds
-    pomodoros=$((pomodoro_count * WORK_DURATION))
-    short_breaks=$((short_break_count * SHORT_BREAK))
-    long_breaks=$((long_break_count * LONG_BREAK))
+    pomodoros=$((pomodoro_time - pomodoro_left_interrupt))
+    short_breaks=$((short_break_time - short_left_interrupt))
+    long_breaks=$((long_break_time - long_left_interrupt))
 
     set -e # re-enable
 }
@@ -64,7 +73,9 @@ display_stats() {
     echo -e "✔ Total Work Time: $(format_time "$pomodoros")"
     echo -e "☕ Total Short Breaks: $(format_time "$short_breaks")"
     echo -e "💤 Long Breaks: $(format_time "$long_breaks")"
-    echo -e "⚠ Total Interrupts: $interrupts_count"
+    echo -e "⚠ Total Interrupts during work: $pomodoro_interrupts_count"
+    echo -e "⚠ Total Interrupts during short breaks: $short_break_interrupts_count"
+    echo -e "⚠ Total Interrupts during long breaks: $long_break_interrupts_count"
     echo -e "====================================\n"
 }
 
