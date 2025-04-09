@@ -17,7 +17,6 @@ if [[ ! -f $LOG_FILE ]]; then
 fi
 
 calculate_stats() {
-
     local start_date="$1"
     local end_date="$2"
 
@@ -80,14 +79,6 @@ calculate_stats() {
     short_left_interrupt=$(echo "$filtered_lines" | grep "\[Short_break\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
     long_left_interrupt=$(echo "$filtered_lines" | grep "\[Long_break\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
 
-    # echo "Pomodoro count: $pomodoro_count"
-    # echo "Short break count: $short_break_count"
-    # echo "Long break count: $long_break_count"
-    # Use global variables for access in display_stats
-    # echo -e "\n debug \n"
-    # echo "$pomodoro_left_interrupt"
-    # echo "$short_left_interrupt"
-    # echo "$long_left_interrupt"
     echo ""
     # total time in seconds
     pomodoros=$((pomodoro_time - pomodoro_left_interrupt))
@@ -104,8 +95,10 @@ format_time() {
     local seconds=$((total_seconds % 60))
     printf "%02dh %02dm %02ds" "$hours" "$minutes" "$seconds"
 }
+
 display_stats() {
     local label="$1"
+    clear
     echo -e "===================================="
     echo -e "📊 $label Stats"
     echo -e "===================================="
@@ -115,7 +108,16 @@ display_stats() {
     echo -e "⚠ Total Interrupts during work: $pomodoro_interrupts_count"
     echo -e "⚠ Total Interrupts during short breaks: $short_break_interrupts_count"
     echo -e "⚠ Total Interrupts during long breaks: $long_break_interrupts_count"
-    echo -e "====================================\n"
+    echo -e "===================================="
+    echo -e "Press any key to continue (q to quit)"
+}
+
+# todo add this in utils.sh file
+wait_for_key() {
+    read -n1 -s key
+    if [[ "$key" == "q" || "$key" == "Q" ]]; then
+        exit 0
+    fi
 }
 
 show_menu() {
@@ -125,57 +127,38 @@ show_menu() {
         echo "2) Weekly Stats"
         echo "3) Monthly Stats"
         echo "4) Total Stats"
-        echo "5) Exit"
+        echo "q) Exit"
         read -rp "Enter your choice: " choice
 
         clear
 
         case $choice in
         1)
-            # today=$(date '+%Y-%m-%d')
-            # calculate_stats "$today" "$today"
-            # display_stats "Today's"
-            today_stats
+            reverse_today_stats
             ;;
         2)
-            # if [[ "$(uname)" == "Linux" ]]; then
-            #     week_start=$(date -d "6 days ago" '+%Y-%m-%d')
-            # else
-            #     week_start=$(date -v -6d '+%Y-%m-%d')
-            # fi
-            # calculate_stats "$week_start" "$today"
-            # display_stats "Weekly"
-            weekly_stats
+            reverse_weekly_stats
             ;;
         3)
-            # if [[ "$(uname)" == "Linux" ]]; then
-            #     month_start=$(date -d "$(date +%Y-%m-01)" '+%Y-%m-%d')
-            # else
-            #     month_start=$(date -v1d '+%Y-%m-%d')
-            # fi
-            # calculate_stats "$month_start" "$today"
-            # display_stats "Monthly"
-            monthly_stats
+            reverse_monthly_stats
             ;;
         4)
             calculate_stats "" ""
             display_stats "Total"
+            wait_for_key
             ;;
-        5)
-            echo "Exiting..."
+        q)
             exit 0
             ;;
         *)
             echo -e "\033[1;31mInvalid choice! Please select a valid option.\033[0m"
+            sleep 1
             ;;
         esac
-        read -n 1 -sp "enter any key to continue to main menu"
-        echo ""
-        clear
     done
 }
 
-monthly_stats() {
+reverse_monthly_stats() {
     declare -a months=("January" "February" "March" "April" "May" "June" "July" "August" "September" "October" "November" "December")
 
     first_line=$(head -n 1 "$LOG_FILE")
@@ -185,60 +168,78 @@ monthly_stats() {
     current_year=$(date '+%Y')
     current_month=$(date '+%m' | sed 's/^0*//') # Remove leading zeros
 
+    # Store all months in an array
+    declare -a all_months=()
     year=$start_year
     month=$start_month
 
     while [[ $year -lt $current_year || ($year -eq $current_year && $month -le $current_month) ]]; do
+        all_months+=("$year-$month")
+        month=$((month + 1))
+        if [[ $month -eq 13 ]]; then
+            month=1
+            year=$((year + 1))
+        fi
+    done
+
+    # Display in reverse order
+    for ((i = ${#all_months[@]} - 1; i >= 0; i--)); do
+        ym=${all_months[$i]}
+        year=$(echo "$ym" | cut -d'-' -f1)
+        month=$(echo "$ym" | cut -d'-' -f2)
+
         next_month=$((month + 1))
         next_year=$year
-
         if [[ $next_month -eq 13 ]]; then
             next_month=1
             next_year=$((year + 1))
         fi
 
-        # Format start and end date as YYYY-MM-DD
         start_date=$(printf "%04d-%02d-01 00:00:00" "$year" "$month")
         end_date=$(printf "%04d-%02d-01 00:00:00" "$next_year" "$next_month")
 
         calculate_stats "$start_date" "$end_date"
         display_stats "${months[$((month - 1))]} $year"
-
-        month=$next_month
-        year=$next_year
+        wait_for_key
     done
 }
 
-weekly_stats() {
+reverse_weekly_stats() {
     # Get the date of the first log line
     first_line=$(head -n 1 "$LOG_FILE")
     first_date=$(echo "$first_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
-    
+
     # Start from the beginning of the week (Monday) for first_date
     start_date=$(date -j -f "%Y-%m-%d" "$first_date" "+%Y-%m-%d" 2>/dev/null || date -d "$first_date" "+%Y-%m-%d")
     day_of_week=$(date -j -f "%Y-%m-%d" "$start_date" "+%u" 2>/dev/null || date -d "$start_date" "+%u")
     start_epoch=$(date -j -f "%Y-%m-%d" "$start_date" +%s 2>/dev/null || date -d "$start_date" +%s)
-    start_epoch=$((start_epoch - (day_of_week - 1) * 86400))  # Move to Monday
+    start_epoch=$((start_epoch - (day_of_week - 1) * 86400)) # Move to Monday
 
     # Current time in epoch
     current_epoch=$(date +%s)
 
+    # Store all weeks in an array
+    declare -a all_weeks=()
     while [[ $start_epoch -lt $current_epoch ]]; do
-        end_epoch=$((start_epoch + 7 * 86400))
+        all_weeks+=("$start_epoch")
+        start_epoch=$((start_epoch + 7 * 86400))
+    done
 
-        # Format readable date range for display
-        start_str=$(date -r "$start_epoch" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$start_epoch" "+%Y-%m-%d 00:00:00")
-        end_str=$(date -r "$end_epoch" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$end_epoch" "+%Y-%m-%d 00:00:00")
+    # Display in reverse order
+    for ((i = ${#all_weeks[@]} - 1; i >= 0; i--)); do
+        week_start=${all_weeks[$i]}
+        week_end=$((week_start + 7 * 86400))
 
-        # Calculate and display
+        start_str=$(date -r "$week_start" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_start" "+%Y-%m-%d 00:00:00")
+        end_str=$(date -r "$week_end" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_end" "+%Y-%m-%d 00:00:00")
+
         calculate_stats "$start_str" "$end_str"
-        display_stats "Week of $(date -r "$start_epoch" "+%d %b %Y" 2>/dev/null || date -d "@$start_epoch" "+%d %b %Y")"
-
-        start_epoch=$end_epoch
+        display_stats "$(date -r "$week_start" "+%d %b" 2>/dev/null || date -d "@$week_start" "+%d %b") - $(date -r "$((week_start + 6 * 86400))" "+%d %b %Y" 2>/dev/null || date -d "@$((week_start + 6 * 86400))" "+%d %b %Y") Stats"
+        wait_for_key
     done
 }
 
-today_stats() {
+reverse_today_stats() {
     # Get current date in YYYY-MM-DD format
     today=$(date "+%Y-%m-%d")
 
@@ -248,15 +249,7 @@ today_stats() {
 
     calculate_stats "$start_date" "$end_date"
     display_stats "Today ($today)"
+    wait_for_key
 }
 
 show_menu
-
-# if(system == "Darwin"){
-#                         cmd = "date -j -f \"%Y-%m-%d %H:%M:%S\" \"" log_date "\" +%s"
-#                     }
-#                     else if (system == "Linux"){
-#                         cmd = "date -d \"" log_date "\" +%s"
-#                     } else{
-#                         print "Unknown OS:", system
-#                     }
