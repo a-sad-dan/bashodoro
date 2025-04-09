@@ -68,16 +68,20 @@ calculate_stats() {
         fi
     fi
 
-    #counts
-    pomodoro_time=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Start\]" | grep -e -o "\[[0-9]+\]" | grep -e -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    short_break_time=$(echo "$filtered_lines" | grep "\[Short_break\] \[Start\]" | grep -e -o "\[[0-9]+\]" | grep -e -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    long_break_time=$(echo "$filtered_lines" | grep "\[Long_break\] \[Start\]" | grep -e -o "\[[0-9]+\]" | grep -e -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
+    # Calculate total times
+    pomodoro_time=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    short_break_time=$(echo "$filtered_lines" | grep "\[Short_break\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    long_break_time=$(echo "$filtered_lines" | grep "\[Long_break\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+
+    # Count interrupts
     pomodoro_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Pomodoro\] \[Interrupt\]")
     short_break_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Short_break\] \[Interrupt\]")
     long_break_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Long_break\] \[Interrupt\]")
-    pomodoro_left_interrupt=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Interrupt\]" | grep -e -o "\[[0-9]+\]" | grep -e -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    short_left_interrupt=$(echo "$filtered_lines" | grep "\[Short_break\] \[Interrupt\]" | grep -e -o "\[[0-9]+\]" | grep -e -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    long_left_interrupt=$(echo "$filtered_lines" | grep "\[Long_break\] \[Interrupt\]" | grep -e -o "\[[0-9]+\]" | grep -e -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
+
+    # Time left during interrupts
+    pomodoro_left_interrupt=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    short_left_interrupt=$(echo "$filtered_lines" | grep "\[Short_break\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    long_left_interrupt=$(echo "$filtered_lines" | grep "\[Long_break\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
 
     echo ""
     # total time in seconds
