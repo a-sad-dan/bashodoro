@@ -22,6 +22,28 @@ if [[ ! -f $REASON_FILE ]]; then
     touch "$REASON_FILE"
 fi
 
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+# BLUE='\033[0;34m'
+# MAGENTA='\033[0;35m'
+# CYAN='\033[0;36m'
+NC='\033[0m' # No Color (reset)
+
+# Functions to show random quotes and facts
+show_random_quote() {
+    local quote
+    quote=$(shuf -n 1 "$SCRIPT_DIR/data/quotes.txt")
+    echo -e "\n${GREEN}🌟 $quote ${NC}\n"
+}
+
+show_random_joke() {
+    local fact
+    fact=$(shuf -n 1 "$SCRIPT_DIR/data/jokes.txt")
+    echo -e "\n${YELLOW}🎲 $fact${NC} \n"
+}
+
 start_timer() {
 
     # Handle Exits gracefully
@@ -58,11 +80,14 @@ start_timer() {
     print_separator
     if [[ $type = "Pomodoro" ]]; then
         echo "⌛ Work in Progress... Press [P] to pause"
-        echo "🎯 Work Session #$session"
+        echo -e "🎯 Work Session ${RED}#$session${NC}"
+        show_random_quote
     elif [[ $type = "Short_break" ]]; then
         echo "☕ Take a short break! Relax for a few minutes."
+        show_random_joke
     elif [[ $type = "Long_break" ]]; then
         echo "🌿 Time for a long break! Step away and recharge."
+        show_random_joke
     fi
 
     # Log the start of the timer
@@ -108,12 +133,10 @@ handle_quit() {
         echo "$(date '+%Y-%m-%d %H:%M:%S') - $reason" >>"$REASON_FILE"
     fi
 
-    # print logo for 1.5 seconds
     clear
-    print_logo
 
     echo "Quitting Bashodoro..."
-    sleep 1
+    sleep 0.5
 
     # clear the terminal and exit
     clear

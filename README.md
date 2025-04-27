@@ -62,6 +62,8 @@ The **Pomodoro Technique**, pioneered by Francesco Cirillo in the late 1980s, is
   - Long break frequency
   - Work session durations
 
+
+
 ### 🌙 Optimized Terminal UI
 - Lightweight, distraction-free interface.
 
@@ -70,6 +72,19 @@ The **Pomodoro Technique**, pioneered by Francesco Cirillo in the late 1980s, is
 
 Here’s the updated **Installation** and **Usage** sections, now including log storage details:
 
+## Custom Content
+
+Break sessions display random entries from:
+
+- `~/.bashodoro/data/jokes.txt`
+- `~/.bashodoro/data/quotes.txt`
+
+**To customize:**
+1. Edit the files (one entry per line)
+2. For quotes: `"Text" - Author`
+3. For jokes: Simple one-liners
+
+Files are auto-created on first run if missing.
 
 ## Installation
 
