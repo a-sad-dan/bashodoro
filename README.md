@@ -62,15 +62,11 @@ The **Pomodoro Technique**, pioneered by Francesco Cirillo in the late 1980s, is
   - Long break frequency
   - Work session durations
 
-
-
 ### 🌙 Optimized Terminal UI
 - Lightweight, distraction-free interface.
 
-### 🆘 Integrated Help Menu
+### 🆗️ Integrated Help Menu
 - Use `-h` or `--help` for contextual usage instructions.
-
-Here’s the updated **Installation** and **Usage** sections, now including log storage details:
 
 ## Custom Content
 
@@ -109,7 +105,6 @@ Files are auto-created on first run if missing.
    sudo ./uninstall.sh
    ```
 
-
 ## Usage
 
 Once installed, you can run **Bashodoro** with:
@@ -122,11 +117,15 @@ bashodoro [OPTIONS]
 
 | Option             | Description                                         |
 |--------------------|-----------------------------------------------------|
-| `-m, --manual`    | Start without automatic session initiation.         |
-| `-s, --stats`     | Show detailed session statistics.                   |
-| `-c, --config`    | Display current parameter settings.                 |
-| `-h, --help`      | Show help menu with usage instructions.             |
-| `Ctrl+C`          | Quit the script (Linux/macOS).                      |
+| `-m, --manual`     | Start without automatic session initiation.         |
+| `-s, --stats`      | Show detailed session statistics.                   |
+| `-c, --config`     | Display current parameter settings.                 |
+| `-h, --help`       | Show help menu with usage instructions.              |
+| `-w [minutes]`     | Set custom work session duration (in minutes).       |
+| `-sb [minutes]`    | Set custom short break duration (in minutes).        |
+| `-lb [minutes]`    | Set custom long break duration (in minutes).         |
+| `-ws [count]`      | Set number of work sessions before a long break.     |
+| `Ctrl+C`           | Quit the script (Linux/macOS).                      |
 
 
 ## Logs
@@ -147,7 +146,6 @@ To clear logs:
 
 ---
 
-Let me know if you need any more tweaks! 🚀
 ## System Dependencies
 
 - `notify-send` (Linux), `osascript` (macOS), `-Command` (Windows PowerShell) for desktop notifications.
