@@ -4,6 +4,7 @@ set -euo pipefail
 
 INSTALL_DIR="/usr/local/bashodoro"
 BIN_PATH="/usr/local/bin/bashodoro"
+MAN_PATH="/usr/local/share/man/man1/bashodoro.1.gz"
 
 # ANSI colors
 RED='\033[0;31m'
@@ -33,6 +34,15 @@ if [[ -L "$BIN_PATH" ]]; then
   rm "$BIN_PATH"
 else
   echo -e "${GREEN}No symlink found at $BIN_PATH${NC}"
+fi
+
+# Remove man page
+if [[ -f "$MAN_PATH" ]]; then
+  echo -e "${YELLOW}Removing man page: $MAN_PATH${NC}"
+  rm -f "$MAN_PATH"
+  mandb >/dev/null 2>&1
+else
+  echo -e "${GREEN}No man page found at $MAN_PATH${NC}"
 fi
 
 echo -e "${GREEN}Bashodoro uninstalled successfully.${NC}"

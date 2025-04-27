@@ -1,0 +1,192 @@
+.TH BASHODORO 1 "April 2025" "v1.0" "Bashodoro - Terminal Pomodoro Timer"
+.SH NAME
+bashodoro \- Terminal-based productivity timer implementing the Pomodoro Technique
+.SH SYNOPSIS
+.B bashodoro
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B Bashodoro
+is a Bash-based, highly configurable implementation of the Pomodoro Technique, aimed at improving productivity through focused work sessions and structured breaks, all within a lightweight terminal interface.
+The program automates the classic Pomodoro methodology: 25-minute work sessions, 5-minute short breaks, and a 15–30-minute long break after four consecutive sessions.
+
+.SH FEATURES
+.IP \[bu] 2
+Configurable work and break durations
+.IP \[bu]
+Real-time countdown and progress tracking
+.IP \[bu]
+Multi-platform desktop notifications
+.IP \[bu]
+Audible alerts (optional)
+.IP \[bu]
+Motivational quotes and jokes during breaks
+.IP \[bu]
+Detailed session statistics and productivity reports
+.IP \[bu]
+Minimalistic, distraction-free interface
+
+.SH OPTIONS
+.TP
+.BR -m ", " --manual
+Start in manual mode (requires keypress to begin each session).
+.TP
+.BR -s ", " --stats
+Display detailed productivity statistics from session logs and exit.
+.TP
+.BR -c ", " --config
+Display current configuration settings and exit.
+.TP
+.BR -h ", " --help
+Display a brief help message and exit.
+.TP
+.BR -w " " [minutes]
+Set a custom work session duration (in minutes) for this run.
+Example:
+.PP
+.RS
+.nf
+$ bashodoro -w 50
+.fi
+.RE
+.TP
+.BR -sb " " [minutes]
+Set a custom short break duration (in minutes) for this run.
+Example:
+.PP
+.RS
+.nf
+$ bashodoro -sb 10
+.fi
+.RE
+.TP
+.BR -lb " " [minutes]
+Set a custom long break duration (in minutes) for this run.
+Example:
+.PP
+.RS
+.nf
+$ bashodoro -lb 30
+.fi
+.RE
+.TP
+.BR -ws " " [count]
+Set the number of work sessions before a long break (default: 4).
+Example:
+.PP
+.RS
+.nf
+$ bashodoro -ws 5
+.fi
+.RE
+
+.SH INTERACTIVE CONTROLS
+During operation:
+.TP
+.B p
+Pause the current session.
+.TP
+.B r
+Resume a paused session.
+.TP
+.B q
+Quit the program.
+
+.SH FILES
+.TP
+.I ~/.bashodoro/config/settings.conf
+Main configuration file (timer durations, notification settings, sound preferences).
+.TP
+.I ~/.bashodoro/data/jokes.txt
+Custom jokes for break sessions (one joke per line).
+.TP
+.I ~/.bashodoro/data/quotes.txt
+Inspirational quotes ("quote" - author format).
+.TP
+.I ~/.bashodoro/logs/bashodoro.log
+Session history, statistics, and productivity logs.
+
+.SH ENVIRONMENT
+.TP
+.B TERM
+Specifies the terminal type for formatting and display.
+.TP
+.B DISPLAY
+Specifies the X11 display for GUI notifications (Linux/X11).
+
+.SH INSTALLATION
+Clone the repository and install:
+.PP
+.RS
+.nf
+$ git clone https://github.com/a-sad-dan/bashodoro.git
+$ cd bashodoro
+$ sudo ./install.sh
+.fi
+.RE
+To uninstall:
+.PP
+.RS
+.nf
+$ sudo ./uninstall.sh
+.fi
+.RE
+
+.SH USAGE
+Start a standard Pomodoro session:
+.PP
+.RS
+.nf
+$ bashodoro
+.fi
+.RE
+
+View Bashodoro statistics:
+.PP
+.RS
+.nf
+$ bashodoro -s
+.fi
+.RE
+
+Start in manual session mode:
+.PP
+.RS
+.nf
+$ bashodoro -m
+.fi
+.RE
+
+.SH LOGS
+Session logs are stored per user at:
+.PP
+.RS
+.nf
+$HOME/.bashodoro/logs/bashodoro.log
+.fi
+.RE
+
+To view logs:
+.PP
+.RS
+.nf
+$ cat $HOME/.bashodoro/logs/bashodoro.log
+.fi
+.RE
+
+To clear logs:
+.PP
+.RS
+.nf
+$ > $HOME/.bashodoro/logs/bashodoro.log
+.fi
+.RE
+
+Please report bugs at:
+<https://github.com/a-sad-dan/bashodoro/issues>
+
+.SH AUTHOR
+a.sad.dan <danishasad91@gmail.com>
+
+.SH COPYRIGHT
+Copyright \[co] 2025
+Released under the MIT License.

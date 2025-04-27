@@ -4,6 +4,7 @@ set -euo pipefail
 
 INSTALL_DIR="/usr/local/bashodoro"
 BIN_PATH="/usr/local/bin/bashodoro"
+MAN_PATH="/usr/local/share/man/man1"
 
 # ANSI colors
 RED='\033[0;31m'
@@ -34,9 +35,15 @@ cp -r . "$INSTALL_DIR"
 chmod +x "$INSTALL_DIR/bashodoro.sh"
 chmod -R +x "$INSTALL_DIR/bin"/*.sh
 
+# Install man page
+echo -e "${YELLOW}Installing man page...${NC}"
+mkdir -p "$MAN_PATH"
+gzip -c "$INSTALL_DIR/man/bashodoro.1" > "$MAN_PATH/bashodoro.1.gz"
+mandb >/dev/null 2>&1
+
 # Change owner to the original invoking user
 if [[ -n "${SUDO_USER:-}" ]]; then 
-  chown -R "$SUDO_USER:$(id -gn "$SUDO_USER")" "$INSTALL_DIR" # <-- fixed bug for different group name then username 
+  chown -R "$SUDO_USER:$(id -gn "$SUDO_USER")" "$INSTALL_DIR" "$MAN_PATH/bashodoro.1.gz"
 else
   echo -e "${RED}Warning: SUDO_USER not set, skipping ownership change.${NC}"
 fi
@@ -47,5 +54,6 @@ if [[ -L "$BIN_PATH" || -f "$BIN_PATH" ]]; then
 fi
 ln -s "$INSTALL_DIR/bashodoro.sh" "$BIN_PATH"
 
-echo -e "${GREEN}Installation complete! Run 'bashodoro' to start.${NC}"
+echo -e "${GREEN}Installation complete!${NC}"
+echo -e "Run 'bashodoro' to start or 'man bashodoro' for documentation."
 exit 0
