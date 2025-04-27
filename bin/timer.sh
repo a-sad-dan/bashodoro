@@ -9,10 +9,23 @@ source "$SCRIPT_DIR/bin/session.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/config/settings.conf"
 
+# For reason storing
+LOG_DIR="$HOME/.bashodoro/logs"
+REASON_FILE="$LOG_DIR/reasons.txt"
+
+# Ensure the directory exists
+mkdir -p "$LOG_DIR"
+
+# Ensure the Reason.txt file exists
+if [[ ! -f $REASON_FILE ]]; then
+    echo "Log file not found, creating log file at $REASON_FILE"
+    touch "$REASON_FILE"
+fi
+
 start_timer() {
 
-    # Handle Quits in the middle
-    trap 'handle_quit $type $i' EXIT     # to log the time left when interrupted
+    # Handle Exits gracefully
+    trap 'handle_quit $type $i' EXIT # to log the time left when interrupted
 
     # get the session number
     local session
@@ -88,6 +101,13 @@ handle_quit() {
     bash bin/notify.sh stop
     save_session "$type" "$duration" "Interrupt" # Log the session in the file
 
+    # Ask user for reason if they quit a WORK session
+    if [[ $type = "Pomodoro" ]]; then
+        echo ""
+        read -rp "Please briefly state your reason: " reason
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $reason" >>"$REASON_FILE"
+    fi
+
     # print logo for 1.5 seconds
     clear
     print_logo
@@ -149,6 +169,7 @@ pause_timer() {
     echo "⏸ Timer Paused "
     echo "🕒 $type | $(format_time "$paused_time") left"
     echo "Press [r] to Resume the timer"
+    echo "Press [q] to Quit the Application"
 
     while true; do
         key=$(get_input)
@@ -156,6 +177,9 @@ pause_timer() {
             bash bin/notify.sh resume
             resume_timer "$paused_time" "$type"
             break
+        fi
+        if [[ $key == "q" || $key == "Q" ]]; then
+            exit 0
         fi
     done
 }

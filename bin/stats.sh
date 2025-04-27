@@ -112,6 +112,18 @@ display_stats() {
     echo -e "Press any key to continue (q to quit)"
 }
 
+# Shows the reasons for quitting the work session
+display_reasons() {
+    if [[ ! -f "$REASON_FILE" ]]; then
+        echo "No reasons logged yet."
+        return
+    fi
+
+    echo "Recent Quit Reasons:"
+    echo "---------------------"
+    tac "$REASON_FILE"
+}
+
 # todo add this in utils.sh file
 wait_for_key() {
     read -n1 -s key
@@ -127,6 +139,7 @@ show_menu() {
         echo "2) Weekly Stats"
         echo "3) Monthly Stats"
         echo "4) Total Stats"
+        echo "5) Show your reasons for Quitting Bashodoro"
         echo "q) Exit"
         read -rp "Enter your choice: " choice
 
@@ -145,6 +158,10 @@ show_menu() {
         4)
             calculate_stats "" ""
             display_stats "Total"
+            wait_for_key
+            ;;
+        5)
+            display_reasons
             wait_for_key
             ;;
         q)
