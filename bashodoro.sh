@@ -128,29 +128,46 @@ manual_mode_prompt() {
 if [[ $# -eq 0 ]]; then
   start_pomodoro
 else
-  case "$1" in
-  --manual | -m)
-    AUTO_MODE=false
-    start_pomodoro
-    ;;
-  --help | -h)
-    help
-    ;;
-  --stats | -s)
-    echo "Show the statistics from logs"
-    # shellcheck disable=SC1091
-    #Load stats.sh
-    source "$SCRIPT_DIR/bin/stats.sh"
-    exit 0
-    ;;
-  --config | -c)
-    source "$SCRIPT_DIR/bin/config.sh"
-    exit 0
-    ;;
-  *)
-    echo "Invalid option: $1"
-    echo "Usage: $0 [-h|--help] [-s|--stats] [-c|--config]"
-    exit 1
-    ;;
-  esac
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --manual | -m)
+      AUTO_MODE=false
+      shift
+      ;;
+    --help | -h)
+      help
+      ;;
+    --stats | -s)
+      # Show the statistics from logs
+      source "$SCRIPT_DIR/bin/stats.sh"
+      exit 0
+      ;;
+    --config | -c)
+      source "$SCRIPT_DIR/bin/config.sh"
+      exit 0
+      ;;
+    -w)
+      WORK_DURATION="$(($2 * 60))"
+      shift 2
+      ;;
+    -sb)
+      SHORT_BREAK="$(($2 * 60))"
+      shift 2
+      ;;
+    -lb)
+      LONG_BREAK="$(($2 * 60))"
+      shift 2
+      ;;
+    -ws)
+      SESSION_COUNT="$(($2 * 60))"
+      shift 2
+      ;;
+    *)
+      echo "Invalid option: $1"
+      echo "Usage: $0 [-h|--help] [-s|--stats] [-c|--config] [-w minutes] [-sb minutes] [-lb minutes] [-ws sessions]"
+      exit 1
+      ;;
+    esac
+  done
+  start_pomodoro
 fi
