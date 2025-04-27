@@ -2,7 +2,6 @@
 
 # Define the directory where the configuration file is stored
 CONFIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../config" && pwd)"
-DEFAULT_CONF="$CONFIG_DIR/bashodoro.conf"
 SETTING_CONF="$CONFIG_DIR/settings.conf"
 
 set -ueo pipefail #error handeling
@@ -22,6 +21,51 @@ update_config() {
     fi
 }
 
+# Function to display settings.conf nicely formatted with colors
+pretty_print_config() {
+    echo -e "\n🔧 \e[1mCurrent Bashodoro Settings:\e[0m"
+    echo -e "----------------------------------"
+
+    while IFS='=' read -r key value; do
+        # Skip empty lines or lines starting with #
+        if [[ -z "$key" || "$key" =~ ^# ]]; then
+            continue
+        fi
+
+        # Prepare a nice label
+        case "$key" in
+        WORK_DURATION) label="Work Duration" ;;
+        SHORT_BREAK) label="Short Break" ;;
+        LONG_BREAK) label="Long Break" ;;
+        SESSION_COUNT) label="Sessions Before Long Break" ;;
+        AUTO_MODE) label="Auto Start Sessions" ;;
+        NOTIFICATIONS) label="Desktop Notifications" ;;
+        SOUNDS) label="Sound Alerts" ;;
+        *) label="$key" ;; # fallback
+        esac
+
+        # Apply transformations (e.g., seconds to minutes, colors)
+        case "$key" in
+        WORK_DURATION | SHORT_BREAK | LONG_BREAK)
+            minutes=$((value / 60))
+            printf "%-30s : %s minutes\n" "$label" "$minutes"
+            ;;
+        AUTO_MODE | NOTIFICATIONS | SOUNDS)
+            if [[ "$value" == "true" ]]; then
+                printf "%-30s : \e[32m%s\e[0m\n" "$label" "Enabled"
+            else
+                printf "%-30s : \e[31m%s\e[0m\n" "$label" "Disabled"
+            fi
+            ;;
+        *)
+            printf "%-30s : %s\n" "$label" "$value"
+            ;;
+        esac
+    done <"$SETTING_CONF"
+
+    echo -e "----------------------------------\n"
+}
+
 # Function to display the main configuration menu
 show_menu() {
     while true; do
@@ -30,18 +74,17 @@ show_menu() {
         echo -e "===================================="
         echo "1) View current settings"
         echo "2) Change settings"
-        echo "3) Reset to default"
-        echo "4) Exit"
+        echo "3) Exit"
         echo -e "====================================\n"
 
-        read -p "Choose an option: " choice
+        read -rp "Choose an option: " choice
 
         case "$choice" in
-        # todo -> Display the configuration in pretty format
-        1) cat "$SETTING_CONF" ;; # Display the configuration file
-        2) modify_settings ;;     # Modify settings
-        3) reset_defaults ;;      # Reset configuration to default
-        4)
+
+        1) pretty_print_config ;;
+        2) modify_settings ;; # Modify settings
+        3)
+            clear
             echo " Exiting..."
             exit 0
             ;;                                          # Exit the script
@@ -70,18 +113,26 @@ modify_settings() {
     *) echo " Invalid choice! Keeping existing setting." ;;
     esac
 
-    # Prompt user for short break duration (in minutes)
-    read -rp "Enter short break duration (in minutes): " short_break
-    if [[ "$short_break" =~ ^[1-9][0-9]*$ ]]; then
-        update_config "SHORT_BREAK" "$((short_break * 60))"
-    else
-        echo " Invalid input! Keeping existing setting."
-    fi
+    #Prompt user for auto start sessions
+    read -rp "Do you want to enable auto-start of sesssions? (yes/no): " auto_choice
+    case "$auto_choice" in
+    yes | YES | y | Y) update_config "AUTO_MODE" "true" ;;
+    no | NO | n | N) update_config "AUTO_MODE" "false" ;;
+    *) echo " Invalid choice! Keeping existing setting." ;;
+    esac
 
     # Prompt user for work session duration (in minutes)
     read -rp "Enter work session duration (in minutes): " work_duration
     if [[ "$work_duration" =~ ^[1-9][0-9]*$ ]]; then
         update_config "WORK_DURATION" "$((work_duration * 60))"
+    else
+        echo " Invalid input! Keeping existing setting."
+    fi
+
+    # Prompt user for short break duration (in minutes)
+    read -rp "Enter short break duration (in minutes): " short_break
+    if [[ "$short_break" =~ ^[1-9][0-9]*$ ]]; then
+        update_config "SHORT_BREAK" "$((short_break * 60))"
     else
         echo " Invalid input! Keeping existing setting."
     fi
@@ -93,13 +144,16 @@ modify_settings() {
     else
         echo " Invalid input! Keeping existing setting."
     fi
-    echo " All changes saved!"
-}
 
-# Function to reset configuration file to default settings
-reset_defaults() {
-    create_config_file "$DEFAULT_CONF"
-    echo " Settings reset to default!"
+    # Prompt user for number of work sessions until long break
+    read -rp "Enter number of work sessions before long break: " session_count
+    if [[ "$session_count" =~ ^[1-9][0-9]*$ ]]; then
+        update_config "SESSION_COUNT" "$session_count"
+    else
+        echo " Invalid input! Keeping existing setting."
+    fi
+
+    echo " All changes saved!"
 }
 
 # Function to create a new configuration file with default settings
@@ -109,22 +163,22 @@ create_config_file() {
     echo " Creating new config file: $file"
 
     cat <<EOL >"$file"
-# Default Configuration
-WORK_DURATION=2
-SHORT_BREAK=50
-LONG_BREAK=4       # 15 minutes
-SESSION_COUNT=4    #4 sessions until long break
-AUTO_MODE=true     #automatically start sessions
-NOTIFICATIONS=true
-SOUNDS=true
+# WORK_DURATION=1500
+# SHORT_BREAK=300
+# LONG_BREAK=900
+# SESSION_COUNT=4         
+# AUTO_MODE=true          
+# NOTIFICATIONS=true
+# SOUNDS=true
+
 EOL
 
     echo " Config file created: $file"
 }
 
-# creating file when user choose opretional mode for config
+# creating file when user choose  mode for config
 ownfile_creation() {
-    read -p "Enter your setting file name: " name
+    read -rp "Enter your setting file name: " name
     if [[ -n "$name" ]]; then
         FILE="$CONFIG_DIR/$name.conf"
 
@@ -161,20 +215,7 @@ opretional_mode() {
     fi
 }
 
-# satrting of config file
+# starting of config file
 while true; do
-    echo "Welcome To Bashodoro Configuration"
-    echo -e "===================================="
-    echo "For intractive mode use I"
-    echo "For option mode use O"
-    echo "Enter X for exit "
-    echo -e "====================================\n"
-
-    read -rp "Enter Mode For Change Config : " choose1
-    case "$choose1" in
-    I | i) show_menu ;;
-    O | o) opretional_mode ;;
-    x | X) exit ;;
-    *) echo "Not a valid input" ;;
-    esac
+    show_menu
 done

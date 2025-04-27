@@ -68,16 +68,20 @@ calculate_stats() {
         fi
     fi
 
-    #counts
-    pomodoro_time=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Start\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    short_break_time=$(echo "$filtered_lines" | grep "\[Short_break\] \[Start\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    long_break_time=$(echo "$filtered_lines" | grep "\[Long_break\] \[Start\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
+    # Calculate total times
+    pomodoro_time=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    short_break_time=$(echo "$filtered_lines" | grep "\[Short_break\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    long_break_time=$(echo "$filtered_lines" | grep "\[Long_break\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+
+    # Count interrupts
     pomodoro_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Pomodoro\] \[Interrupt\]")
     short_break_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Short_break\] \[Interrupt\]")
     long_break_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Long_break\] \[Interrupt\]")
-    pomodoro_left_interrupt=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    short_left_interrupt=$(echo "$filtered_lines" | grep "\[Short_break\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
-    long_left_interrupt=$(echo "$filtered_lines" | grep "\[Long_break\] \[Interrupt\]" | egrep -o "\[[0-9]+\]" | egrep -o "[0-9]+" | awk '{sum+=$1} END {print sum}')
+
+    # Time left during interrupts
+    pomodoro_left_interrupt=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    short_left_interrupt=$(echo "$filtered_lines" | grep "\[Short_break\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
+    long_left_interrupt=$(echo "$filtered_lines" | grep "\[Long_break\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
 
     echo ""
     # total time in seconds
@@ -112,9 +116,21 @@ display_stats() {
     echo -e "Press any key to continue (q to quit)"
 }
 
+# Shows the reasons for quitting the work session
+display_reasons() {
+    if [[ ! -f "$REASON_FILE" ]]; then
+        echo "No reasons logged yet."
+        return
+    fi
+
+    echo "Recent Quit Reasons:"
+    echo "---------------------"
+    tac "$REASON_FILE"
+}
+
 # todo add this in utils.sh file
 wait_for_key() {
-    read -n1 -s key
+    read -rn1 -s key
     if [[ "$key" == "q" || "$key" == "Q" ]]; then
         exit 0
     fi
@@ -127,6 +143,7 @@ show_menu() {
         echo "2) Weekly Stats"
         echo "3) Monthly Stats"
         echo "4) Total Stats"
+        echo "5) Show your reasons for Quitting Bashodoro"
         echo "q) Exit"
         read -rp "Enter your choice: " choice
 
@@ -145,6 +162,10 @@ show_menu() {
         4)
             calculate_stats "" ""
             display_stats "Total"
+            wait_for_key
+            ;;
+        5)
+            display_reasons
             wait_for_key
             ;;
         q)

@@ -30,6 +30,7 @@ notificationSound() {
   fi
 }
 
+
 # Function: Send Desktop Notification
 sendNotification() {
   if [ "$NOTIFICATIONS" = true ]; then
@@ -68,7 +69,7 @@ stop)
   notificationSound "joyous.wav"
   ;;
 complete)
-  sendNotification "Time's up!"
+  sendNotification "Time is up!"   # single qoute was creating problem in passing msg. Removed single qoute just for now.
   notificationSound "jokingly.wav"
   ;;
 *)

@@ -9,10 +9,45 @@ source "$SCRIPT_DIR/bin/session.sh"
 # shellcheck disable=SC1091
 source "$SCRIPT_DIR/config/settings.conf"
 
+# For reason storing
+LOG_DIR="$HOME/.bashodoro/logs"
+REASON_FILE="$LOG_DIR/reasons.txt"
+
+# Ensure the directory exists
+mkdir -p "$LOG_DIR"
+
+# Ensure the Reason.txt file exists
+if [[ ! -f $REASON_FILE ]]; then
+    echo "Log file not found, creating log file at $REASON_FILE"
+    touch "$REASON_FILE"
+fi
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+# BLUE='\033[0;34m'
+# MAGENTA='\033[0;35m'
+# CYAN='\033[0;36m'
+NC='\033[0m' # No Color (reset)
+
+# Functions to show random quotes and facts
+show_random_quote() {
+    local quote
+    quote=$(shuf -n 1 "$SCRIPT_DIR/data/quotes.txt")
+    echo -e "\n${GREEN}🌟 $quote ${NC}\n"
+}
+
+show_random_joke() {
+    local fact
+    fact=$(shuf -n 1 "$SCRIPT_DIR/data/jokes.txt")
+    echo -e "\n${YELLOW}🎲 $fact${NC} \n"
+}
+
 start_timer() {
 
-    # Handle Quits in the middle
-    trap 'handle_quit $type $i' EXIT     # to log the time left when interrupted
+    # Handle Exits gracefully
+    trap 'handle_quit $type $i' EXIT # to log the time left when interrupted
 
     # get the session number
     local session
@@ -45,11 +80,14 @@ start_timer() {
     print_separator
     if [[ $type = "Pomodoro" ]]; then
         echo "⌛ Work in Progress... Press [P] to pause"
-        echo "🎯 Work Session #$session"
+        echo -e "🎯 Work Session ${RED}#$session${NC}"
+        show_random_quote
     elif [[ $type = "Short_break" ]]; then
         echo "☕ Take a short break! Relax for a few minutes."
+        show_random_joke
     elif [[ $type = "Long_break" ]]; then
         echo "🌿 Time for a long break! Step away and recharge."
+        show_random_joke
     fi
 
     # Log the start of the timer
@@ -88,12 +126,17 @@ handle_quit() {
     bash bin/notify.sh stop
     save_session "$type" "$duration" "Interrupt" # Log the session in the file
 
-    # print logo for 1.5 seconds
+    # Ask user for reason if they quit a WORK session
+    if [[ $type = "Pomodoro" ]]; then
+        echo ""
+        read -rp "Please briefly state your reason: " reason
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $reason" >>"$REASON_FILE"
+    fi
+
     clear
-    print_logo
 
     echo "Quitting Bashodoro..."
-    sleep 1
+    sleep 0.5
 
     # clear the terminal and exit
     clear
@@ -149,6 +192,7 @@ pause_timer() {
     echo "⏸ Timer Paused "
     echo "🕒 $type | $(format_time "$paused_time") left"
     echo "Press [r] to Resume the timer"
+    echo "Press [q] to Quit the Application"
 
     while true; do
         key=$(get_input)
@@ -156,6 +200,9 @@ pause_timer() {
             bash bin/notify.sh resume
             resume_timer "$paused_time" "$type"
             break
+        fi
+        if [[ $key == "q" || $key == "Q" ]]; then
+            exit 0
         fi
     done
 }
