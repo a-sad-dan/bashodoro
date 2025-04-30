@@ -31,16 +31,47 @@ YELLOW='\033[0;33m'
 # CYAN='\033[0;36m'
 NC='\033[0m' # No Color (reset)
 
+# Detects available shuffle command
+get_shuffle_command() {
+    if command -v shuf > /dev/null; then
+        echo "shuf"
+    elif command -v gshuf > /dev/null; then
+        echo "gshuf"
+    else
+        echo "awk"  # Fallback if no shuffle is available
+    fi
+}
+
 # Functions to show random quotes and facts
 show_random_quote() {
     local quote
-    quote=$(shuf -n 1 "$SCRIPT_DIR/data/quotes.txt")
+
+    local quote_cmd
+    quote_cmd=$(get_shuffle_command)
+
+    if [[ $quote_cmd == "awk" ]]; then
+        quote=$(awk 'BEGIN {srand()} {lines[NR] = $0} END {print lines[int(rand() * NR) + 1]}' "$SCRIPT_DIR/data/quotes.txt")
+    else
+        quote=$($quote_cmd -n 1 "$SCRIPT_DIR/data/quotes.txt")
+    fi
+
+    # quote=$(shuf -n 1 "$SCRIPT_DIR/data/quotes.txt")
     echo -e "\n${GREEN}🌟 $quote ${NC}\n"
 }
 
 show_random_joke() {
+
+    local joke_cmd
+    joke_cmd=$(get_shuffle_command)
     local fact
-    fact=$(shuf -n 1 "$SCRIPT_DIR/data/jokes.txt")
+
+    if [[ $joke_cmd == "awk" ]]; then
+        fact=$(awk 'BEGIN {srand()} {lines[NR] = $0} END {print lines[int(rand() * NR) + 1]}' "$SCRIPT_DIR/data/jokes.txt")
+    else
+        fact=$($joke_cmd -n 1 "$SCRIPT_DIR/data/jokes.txt")
+    fi
+
+    # fact=$(shuf -n 1 "$SCRIPT_DIR/data/jokes.txt")
     echo -e "\n${YELLOW}🎲 $fact${NC} \n"
 }
 
