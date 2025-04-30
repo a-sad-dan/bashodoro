@@ -152,12 +152,15 @@ show_menu() {
         case $choice in
         1)
             reverse_today_stats
+            clear
             ;;
         2)
             reverse_weekly_stats
+            clear
             ;;
         3)
             reverse_monthly_stats
+            clear
             ;;
         4)
             calculate_stats "" ""
