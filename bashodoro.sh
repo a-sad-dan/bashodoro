@@ -52,11 +52,11 @@ help() {
   echo "Quick Start: ./bashodoro.sh"
   echo ""
   echo "Options:"
-  echo "  -m, --manual      Start in manual mode (no auto-start)"
-  echo "  -s, --stats                    Show session statistics"
+  echo "  -m, --manual          Start in manual mode (no auto-start)"
   echo "  -c, --config          Display current configuration"
+  echo "  -s, --stats           Show session statistics"
   echo "  -h, --help            Show this help message"
-  echo "  Ctrl+C, Cmd+C         Quit the program"
+  echo "  Ctrl+C/ Cmd+C         Quit the program"
 
   echo ""
   exit 1

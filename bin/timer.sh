@@ -33,12 +33,12 @@ NC='\033[0m' # No Color (reset)
 
 # Detects available shuffle command
 get_shuffle_command() {
-    if command -v shuf > /dev/null; then
+    if command -v shuf >/dev/null; then
         echo "shuf"
-    elif command -v gshuf > /dev/null; then
+    elif command -v gshuf >/dev/null; then
         echo "gshuf"
     else
-        echo "awk"  # Fallback if no shuffle is available
+        echo "awk" # Fallback if no shuffle is available
     fi
 }
 
@@ -84,7 +84,6 @@ start_timer() {
     local session
     session=$(($(get_session_num) + 1))
 
-    local duration="$1"
     local type="$2" #Pomodoro #Short_break #Long_break
 
     # Find duration from type
@@ -95,6 +94,8 @@ start_timer() {
     elif [[ $type = "Long_break" ]]; then
         duration=$LONG_BREAK
     fi
+
+    local duration="$1"
 
     # Determine total_time based on type from the sourced config file
     local total_time
@@ -161,6 +162,10 @@ handle_quit() {
     if [[ $type = "Pomodoro" ]]; then
         echo ""
         read -rp "Please briefly state your reason: " reason
+        # check if the reason is not empty
+        if [[ -z $reason ]]; then
+            reason="No reason provided"
+        fi
         echo "$(date '+%Y-%m-%d %H:%M:%S') - $reason" >>"$REASON_FILE"
     fi
 
@@ -229,10 +234,10 @@ pause_timer() {
         key=$(get_input)
         if [[ $key == "r" || $key == "R" ]]; then
             bash bin/notify.sh resume
+            echo "Paused Time : $(format_time "$paused_time")"
             resume_timer "$paused_time" "$type"
             break
-        fi
-        if [[ $key == "q" || $key == "Q" ]]; then
+        elif [[ $key == "q" || $key == "Q" ]]; then
             exit 0
         fi
     done
