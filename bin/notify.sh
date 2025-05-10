@@ -3,6 +3,8 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../config" && pwd)"
 set -euo pipefail
+
+
 source "$CONFIG_DIR/settings.conf"
 
 # Detect platform
@@ -27,6 +29,7 @@ notificationSound() {
     fi
   fi
 }
+
 
 # Function: Send Desktop Notification
 sendNotification() {
@@ -66,7 +69,7 @@ stop)
   notificationSound "joyous.wav"
   ;;
 complete)
-  sendNotification "Time's up!"
+  sendNotification "Time is up!"   # single qoute was creating problem in passing msg. Removed single qoute just for now.
   notificationSound "jokingly.wav"
   ;;
 *)
