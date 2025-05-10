@@ -138,6 +138,10 @@ start_timer() {
             bash bin/notify.sh pause
             pause_timer "$i" "$type"
             return
+
+            # if any other key is pressed, add 1s time penalty to avoid the timer running fast on keypress
+        else
+            sleep 1
         fi
     done
 
