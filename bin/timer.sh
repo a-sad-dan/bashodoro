@@ -131,18 +131,17 @@ start_timer() {
         echo -ne "\r⏳ Time Left: $(format_time $i) $(progress_bar "$total_time" $i)"
         delete_line
 
-        # listen for interrupt every 1 s
         keyPress=$(get_input)
 
         if [[ $keyPress == "p" || $keyPress == "P" ]]; then
             bash bin/notify.sh pause
             pause_timer "$i" "$type"
             return
-
-            # if any other key is pressed, add 1s time penalty to avoid the timer running fast on keypress
-        else
+        elif [[ -n $keyPress ]]; then
+            # Any other key was pressed
             sleep 1
         fi
+        # Do nothing if no key was pressed (no extra sleep)
     done
 
     # This marks the session as complete
