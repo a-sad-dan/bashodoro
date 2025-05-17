@@ -11,10 +11,94 @@ source "$SCRIPT_DIR/config/settings.conf"
 LOG_DIR="$HOME/.bashodoro/logs"
 LOG_FILE="$LOG_DIR/bashodoro.log"
 
+STAT_DIR="$HOME/.bashodoro/stats"
+STAT_FILE="$STAT_DIR/stats.csv"
+UPDATE_FILE="$STAT_DIR/update.log"
+
+mkdir -p "$STAT_DIR"
+
 if [[ ! -f $LOG_FILE ]]; then
-    echo "Log file not found!"
+    echo "Log file not found"
     exit 1
 fi
+
+if [[ ! -f $STAT_FILE ]]; then
+    echo "Log file not found, creating log file at $STAT_FILE"
+    touch "$STAT_FILE"
+fi
+
+if [[ ! -f $UPDATE_FILE ]]; then
+    echo "Log file not found, creating log file at $UPDATE_FILE"
+    touch "$UPDATE_FILE"
+fi
+
+calculate_all_stat() {
+    >"$STAT_FILE"
+    reverse_monthly_stats
+    reverse_weekly_stats
+    reverse_today_stats
+    calculate_stats "" ""
+    first_line=$(head -n 1 "$LOG_FILE")
+    last_line=$(tail -n 1 "$LOG_FILE")
+    first_date=$(echo "$first_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+    last_date=$(echo "$last_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+    start_date=$(date -j -f "%Y-%m-%d" "$first_date" "+%Y-%m-%d" 2>/dev/null || date -d "$first_date" "+%Y-%m-%d")
+    finish_date=$(date -j -f "%Y-%m-%d" "$last_date" "+%Y-%m-%d" 2>/dev/null || date -d "$last_date" "+%Y-%m-%d")
+    write_stats_to_csv "$STAT_FILE" "TOTAL" "$start_date to $finish_date"
+}
+
+display_all_stats_from_csv() {
+    local mode="$1"
+
+    if [[ ! -f "$STAT_FILE" ]]; then
+        echo "⚠ Stats file not found!"
+        return 1
+    fi
+
+    case "$mode" in
+    today)
+        #echo -e "\n===== 📆 Today Stats ====="
+        awk -f bin/today_display.awk "$STAT_FILE"
+
+        ;;
+    total)
+        #echo -e "\n===== 📈 Total Stats ====="
+        awk -f bin/total_display.awk "$STAT_FILE"
+        ;;
+    weekly)
+
+        # echo -e "\n📅 Weekly Stats:\n"
+        awk -f bin/weekly_display.awk "$STAT_FILE"
+        
+
+        ;;
+    monthly)
+        #echo -e "\n===== 🗓 Monthly Stats ====="
+        awk -f bin/monthly_display.awk "$STAT_FILE"
+        ;;
+    *)
+        echo "Usage: display_all_stats_from_csv [today|total|weekly|monthly]"
+        return 1
+        ;;
+    esac
+}
+
+update_stat() {
+    last_line=$(tail -n 1 "$LOG_FILE")
+    if [[ ! -s $UPDATE_FILE ]]; then
+        echo "$last_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' >"$UPDATE_FILE"
+        calculate_all_stat
+    else
+        last_update_timestamp=$(cat "$UPDATE_FILE")
+        last_log_timestamp=$(echo "$last_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}')
+        if [[ "$last_log_timestamp" == "$last_update_timestamp" ]]; then
+            return
+        else
+            calculate_all_stat
+            echo "$last_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}' >"$UPDATE_FILE"
+        fi
+    fi
+}
 
 calculate_stats() {
     local start_date="$1"
@@ -115,6 +199,26 @@ display_stats() {
     echo -e "===================================="
     echo -e "Press any key to continue (q to quit)"
 }
+write_stats_to_csv() {
+    local stat_file="$1"
+    local label="$2"
+    local date_range="$3"
+
+    last_line=$(tail -n 1 "$LOG_FILE")
+
+    last_update_timestamp=$(cat "$UPDATE_FILE")
+    last_log_timestamp=$(echo "$last_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}')
+
+    # Ensure header exists
+    if [[ "$last_log_timestamp" == "$last_update_timestamp" ]]; then
+        if [[ ! -s "$stat_file" ]]; then
+            echo "label,date_range,pomodoros,short_breaks,long_breaks,pomodoro_interrupts_count,short_break_interrupts_count,long_break_interrupts_count" >"$stat_file"
+        fi
+    fi
+
+    # Append stats
+    echo "$label,$date_range,$pomodoros,$short_breaks,$long_breaks,$pomodoro_interrupts_count,$short_break_interrupts_count,$long_break_interrupts_count" >>"$stat_file"
+}
 
 # Shows the reasons for quitting the work session
 display_reasons() {
@@ -151,25 +255,29 @@ show_menu() {
 
         case $choice in
         1)
-            reverse_today_stats
+            display_all_stats_from_csv "today"
+            wait_for_key
             clear
             ;;
         2)
-            reverse_weekly_stats
+            display_all_stats_from_csv "weekly"
+            wait_for_key
             clear
             ;;
         3)
-            reverse_monthly_stats
+            display_all_stats_from_csv "monthly"
+            wait_for_key
             clear
             ;;
         4)
-            calculate_stats "" ""
-            display_stats "Total"
+            display_all_stats_from_csv "total"
             wait_for_key
+            clear
             ;;
         5)
             display_reasons
             wait_for_key
+            clear
             ;;
         q)
             exit 0
@@ -183,6 +291,7 @@ show_menu() {
 }
 
 reverse_monthly_stats() {
+
     declare -a months=("January" "February" "March" "April" "May" "June" "July" "August" "September" "October" "November" "December")
 
     first_line=$(head -n 1 "$LOG_FILE")
@@ -223,12 +332,14 @@ reverse_monthly_stats() {
         end_date=$(printf "%04d-%02d-01 00:00:00" "$next_year" "$next_month")
 
         calculate_stats "$start_date" "$end_date"
-        display_stats "${months[$((month - 1))]} $year"
-        wait_for_key
+        write_stats_to_csv "$STAT_FILE" "${months[$((month - 1))]} $year" "$start_date to $end_date"
+        #display_stats "${months[$((month - 1))]} $year"
+        #wait_for_key
     done
 }
 
 reverse_weekly_stats() {
+
     # Get the date of the first log line
     first_line=$(head -n 1 "$LOG_FILE")
     first_date=$(echo "$first_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
@@ -258,12 +369,14 @@ reverse_weekly_stats() {
         end_str=$(date -r "$week_end" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_end" "+%Y-%m-%d 00:00:00")
 
         calculate_stats "$start_str" "$end_str"
-        display_stats "$(date -r "$week_start" "+%d %b" 2>/dev/null || date -d "@$week_start" "+%d %b") - $(date -r "$((week_start + 6 * 86400))" "+%d %b %Y" 2>/dev/null || date -d "@$((week_start + 6 * 86400))" "+%d %b %Y") Stats"
-        wait_for_key
+        write_stats_to_csv "$STAT_FILE" "Week $i" "$start_str to $end_str"
+        #display_stats "$(date -r "$week_start" "+%d %b" 2>/dev/null || date -d "@$week_start" "+%d %b") - $(date -r "$((week_start + 6 * 86400))" "+%d %b %Y" 2>/dev/null || date -d "@$((week_start + 6 * 86400))" "+%d %b %Y") Stats"
+        #wait_for_key
     done
 }
 
 reverse_today_stats() {
+
     # Get current date in YYYY-MM-DD format
     today=$(date "+%Y-%m-%d")
 
@@ -272,8 +385,37 @@ reverse_today_stats() {
     end_date="$today 23:59:59"
 
     calculate_stats "$start_date" "$end_date"
-    display_stats "Today ($today)"
-    wait_for_key
+    write_stats_to_csv "$STAT_FILE" "TODAY" "$start_date to $end_date"
+    #display_stats "Today ($today)"
+    #wait_for_key
 }
 
+update_stat
 show_menu
+
+
+# awk -F',' '
+# function format_time(sec) {
+#     h = int(sec / 3600)
+#     m = int((sec % 3600) / 60)
+#     s = sec % 60
+#     return sprintf("%02dh %02dm %02ds", h, m, s)
+# }
+
+# BEGIN {
+#     printf "%-10s | %-24s | %-15s | %-15s | %-15s | %6s | %6s | %6s\n", "Label", "Date Range", "Pomo Time", "Short Break", "Long Break", "PInt", "SBInt", "LBInt";
+#     print "-----------------------------------------------------------------------------------------------------------------------";
+# }
+# NR > 1 && $1 ~ /^Week [0-9]+$/ {
+#     pomo_time = format_time($3)
+#     short_break_time = format_time($4)
+#     long_break_time = format_time($5)
+
+#     split($2, parts, " to ")
+#     gsub(/ 00:00:00/, "", parts[1])
+#     gsub(/ 00:00:00/, "", parts[2])
+#     clean_range = parts[1] " to " parts[2]
+
+#     printf "%-10s | %-23s | %-15s | %-15s | %-15s | %6s | %6s | %6s\n", $1, clean_range, pomo_time, short_break_time, long_break_time, $6, $7, $8;
+# }
+# ' "$STAT_FILE"
