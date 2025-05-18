@@ -26,7 +26,7 @@ save_session() {
   local signal="$3" #Start, End, Interrupt
 
   # Append log entry to file
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$session_type] [$signal] [$duration]" >>"$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S'),$session_type,$signal,$duration" >>"$LOG_FILE"
 }
 
 get_session_num() {
@@ -34,6 +34,6 @@ get_session_num() {
   local today
   today=$(date '+%Y-%m-%d')
 
-  sess_num=$(grep "$today" "$LOG_FILE" | grep -c "\[Pomodoro\] \[End\]")   # <-- fixed bug of session count 
+  sess_num=$(grep "$today" "$LOG_FILE" | grep -c "\[Pomodoro\],\[End\]")   # <-- fixed bug of session count 
   echo "$sess_num"
 }

@@ -11,110 +11,109 @@ source "$SCRIPT_DIR/config/settings.conf"
 LOG_DIR="$HOME/.bashodoro/logs"
 LOG_FILE="$LOG_DIR/bashodoro.log"
 
+
 if [[ ! -f $LOG_FILE ]]; then
-    echo "Log file not found!"
+    echo "Log file not found"
     exit 1
 fi
 
-calculate_stats() {
-    local start_date="$1"
-    local end_date="$2"
 
-    os_type=$(uname)
-
-    # disable 'exit on error'
-    set +e
-    if [[ $os_type == "Darwin" ]]; then
-        if [[ -n "$start_date" && -n "$end_date" ]]; then
-            start_epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$start_date" +%s)
-            end_epoch=$(date -j -f "%Y-%m-%d %H:%M:%S" "$end_date" +%s)
-
-            filtered_lines=$(gawk -v start="$start_epoch" -v end="$end_epoch" '
-            {
-                regex = "\\[([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2}:[0-9]{2}:[0-9]{2})\\]"
-                match($0,regex, m)
-                if(m[1] != ""){
-                    log_date = m[1] " " m[2]
-                    cmd = "date -j -f \"%Y-%m-%d %H:%M:%S\" \"" log_date "\" +%s"
-                    cmd | getline log_epoch
-                    close(cmd)
-                    if(log_epoch >= start && log_epoch < end) print $0
-                }
-            }' "$LOG_FILE")
-
-        else
-            filtered_lines=$(cat "$LOG_FILE") # Match all lines for total stats
-        fi
-    elif [[ $os_type == "Linux" ]]; then
-        if [[ -n "$start_date" && -n "$end_date" ]]; then
-            start_epoch=$(date -d "$start_date" +%s)
-            end_epoch=$(date -d "$end_date" +%s)
-
-            filtered_lines=$(awk -v start="$start_epoch" -v end="$end_epoch" '
-            {
-                regex = "\\[([0-9]{4}-[0-9]{2}-[0-9]{2}) ([0-9]{2}:[0-9]{2}:[0-9]{2})\\]"
-                match($0,regex, m)
-                if(m[1] != ""){
-                    log_date = m[1] " " m[2]
-                    cmd = "date -d \"" log_date "\" +%s"
-                    cmd | getline log_epoch
-                    close(cmd)
-                    if(log_epoch >= start && log_epoch < end) print $0
-                }
-            }' "$LOG_FILE")
-
-        else
-            filtered_lines=$(cat "$LOG_FILE") # Match all lines for total stats
-        fi
-    fi
-
-    # Calculate total times
-    pomodoro_time=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
-    short_break_time=$(echo "$filtered_lines" | grep "\[Short_break\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
-    long_break_time=$(echo "$filtered_lines" | grep "\[Long_break\] \[Start\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
-
-    # Count interrupts
-    pomodoro_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Pomodoro\] \[Interrupt\]")
-    short_break_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Short_break\] \[Interrupt\]")
-    long_break_interrupts_count=$(echo "$filtered_lines" | grep -c "\[Long_break\] \[Interrupt\]")
-
-    # Time left during interrupts
-    pomodoro_left_interrupt=$(echo "$filtered_lines" | grep "\[Pomodoro\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
-    short_left_interrupt=$(echo "$filtered_lines" | grep "\[Short_break\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
-    long_left_interrupt=$(echo "$filtered_lines" | grep "\[Long_break\] \[Interrupt\]" | grep -oE "\[[0-9]+\]" | tr -d '[]' | awk '{sum+=$1} END {print sum}')
-
-    echo ""
-    # total time in seconds
-    pomodoros=$((pomodoro_time - pomodoro_left_interrupt))
-    short_breaks=$((short_break_time - short_left_interrupt))
-    long_breaks=$((long_break_time - long_left_interrupt))
-
-    set -e # re-enable
+calculate_stats_fromawk() {
+    local from_time="$1"
+    local to_time="$2"
+    local log_file="$LOG_FILE"  # Set your default log file path here
+    AWK=$(command -v gawk || command -v awk)
+    "$AWK" -F',' -v from="$from_time" -v to="$to_time" '
+function parse_datetime(s,    d, t) {
+    split(s, dt, " ")
+    split(dt[1], d, "-")
+    split(dt[2], t, ":")
+    return mktime(d[1] " " d[2] " " d[3] " " t[1] " " t[2] " " t[3])
 }
 
-format_time() {
-    local total_seconds="$1"
-    local hours=$((total_seconds / 3600))
-    local minutes=$(((total_seconds % 3600) / 60))
-    local seconds=$((total_seconds % 60))
-    printf "%02dh %02dm %02ds" "$hours" "$minutes" "$seconds"
+BEGIN {
+    total_work = total_short = total_long = 0
+    count_work = count_short = count_long = 0
+    int_work = int_short = int_long = 0
 }
 
-display_stats() {
-    local label="$1"
-    clear
-    echo -e "===================================="
-    echo -e "📊 $label Stats"
-    echo -e "===================================="
-    echo -e "✔ Total Work Time: $(format_time "$pomodoros")"
-    echo -e "☕ Total Short Breaks: $(format_time "$short_breaks")"
-    echo -e "💤 Long Breaks: $(format_time "$long_breaks")"
-    echo -e "⚠ Total Interrupts during work: $pomodoro_interrupts_count"
-    echo -e "⚠ Total Interrupts during short breaks: $short_break_interrupts_count"
-    echo -e "⚠ Total Interrupts during long breaks: $long_break_interrupts_count"
-    echo -e "===================================="
-    echo -e "Press any key to continue (q to quit)"
+{
+    ts = $1
+    type = $2
+    signal = $3
+    duration = $4
+
+    t = parse_datetime(ts)
+
+    if ((from == "" || t >= parse_datetime(from)) &&
+        (to == "" || t <= parse_datetime(to))) {
+
+        if (type == "Pomodoro") {
+            if (signal == "End") {
+                total_work += duration
+                count_work++
+            } else if (signal == "Interrupt") {
+                int_work++
+            }
+        } else if (type == "Short_break") {
+            if (signal == "End") {
+                total_short += duration
+                count_short++
+            } else if (signal == "Interrupt") {
+                int_short++
+            }
+        } else if (type == "Long_break") {
+            if (signal == "End") {
+                total_long += duration
+                count_long++
+            } else if (signal == "Interrupt") {
+                int_long++
+            }
+        }
+    }
 }
+
+END {
+    total_all = total_work + total_short + total_long
+
+    printf("----- Bashodoro Stats -----\n")
+    printf("Time Range: %s to %s\n\n", from == "" ? "START" : from, to == "" ? "NOW" : to)
+
+    printf("Work Time       : %.2f min (%d sessions)\n", total_work / 60, count_work)
+    printf("Short Break Time: %.2f min (%d sessions)\n", total_short / 60, count_short)
+    printf("Long Break Time : %.2f min (%d sessions)\n", total_long / 60, count_long)
+
+    printf("\nInterrupts:\n")
+    printf("  Work        : %d\n", int_work)
+    printf("  Short Break : %d\n", int_short)
+    printf("  Long Break  : %d\n", int_long)
+
+    if (total_all > 0) {
+        printf("\nTime Distribution:\n")
+        printf("  Work        : %.2f%%\n", total_work * 100 / total_all)
+        printf("  Short Break : %.2f%%\n", total_short * 100 / total_all)
+        printf("  Long Break  : %.2f%%\n", total_long * 100 / total_all)
+    }
+    printf("-----------------------------\n")
+}
+' "$log_file"
+}
+
+# display_stats() {
+#     local label="$1"
+#     clear
+#     echo -e "===================================="
+#     echo -e "📊 $label Stats"
+#     echo -e "===================================="
+#     echo -e "✔ Total Work Time: $(format_time "$pomodoros")"
+#     echo -e "☕ Total Short Breaks: $(format_time "$short_breaks")"
+#     echo -e "💤 Long Breaks: $(format_time "$long_breaks")"
+#     echo -e "⚠ Total Interrupts during work: $pomodoro_interrupts_count"
+#     echo -e "⚠ Total Interrupts during short breaks: $short_break_interrupts_count"
+#     echo -e "⚠ Total Interrupts during long breaks: $long_break_interrupts_count"
+#     echo -e "===================================="
+#     echo -e "Press any key to continue (q to quit)"
+# }
 
 # Shows the reasons for quitting the work session
 display_reasons() {
@@ -130,6 +129,7 @@ display_reasons() {
 
 # todo add this in utils.sh file
 wait_for_key() {
+    echo -e "Press any key to continue (q to quit)"
     read -rn1 -s key
     if [[ "$key" == "q" || "$key" == "Q" ]]; then
         exit 0
@@ -151,7 +151,8 @@ show_menu() {
 
         case $choice in
         1)
-            reverse_today_stats
+            calculate_stats_fromawk "$(date '+%Y-%m-%d 00:00:00')" "$(date '+%Y-%m-%d 23:59:59')"
+            wait_for_key
             clear
             ;;
         2)
@@ -163,13 +164,14 @@ show_menu() {
             clear
             ;;
         4)
-            calculate_stats "" ""
-            display_stats "Total"
+            calculate_stats_fromawk "" ""
             wait_for_key
+            clear
             ;;
         5)
             display_reasons
             wait_for_key
+            clear
             ;;
         q)
             exit 0
@@ -183,10 +185,11 @@ show_menu() {
 }
 
 reverse_monthly_stats() {
+
     declare -a months=("January" "February" "March" "April" "May" "June" "July" "August" "September" "October" "November" "December")
 
     first_line=$(head -n 1 "$LOG_FILE")
-    start_year=$(echo "$first_line" | cut -d'-' -f1 | sed 's/^\[//')
+    start_year=$(echo "$first_line" | cut -d'-' -f1)
     start_month=$(echo "$first_line" | cut -d'-' -f2 | sed 's/^0*//') # Remove leading zeros
 
     current_year=$(date '+%Y')
@@ -221,17 +224,18 @@ reverse_monthly_stats() {
 
         start_date=$(printf "%04d-%02d-01 00:00:00" "$year" "$month")
         end_date=$(printf "%04d-%02d-01 00:00:00" "$next_year" "$next_month")
-
-        calculate_stats "$start_date" "$end_date"
-        display_stats "${months[$((month - 1))]} $year"
+        echo "${months[$((month - 1))]} $year"
+        calculate_stats_fromawk "$start_date" "$end_date"
         wait_for_key
+        clear
     done
 }
 
 reverse_weekly_stats() {
+
     # Get the date of the first log line
     first_line=$(head -n 1 "$LOG_FILE")
-    first_date=$(echo "$first_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+    first_date=$(echo "$first_line" | cut -d' ' -f1)
 
     # Start from the beginning of the week (Monday) for first_date
     start_date=$(date -j -f "%Y-%m-%d" "$first_date" "+%Y-%m-%d" 2>/dev/null || date -d "$first_date" "+%Y-%m-%d")
@@ -256,24 +260,12 @@ reverse_weekly_stats() {
 
         start_str=$(date -r "$week_start" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_start" "+%Y-%m-%d 00:00:00")
         end_str=$(date -r "$week_end" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_end" "+%Y-%m-%d 00:00:00")
+        echo "Week $i";
 
-        calculate_stats "$start_str" "$end_str"
-        display_stats "$(date -r "$week_start" "+%d %b" 2>/dev/null || date -d "@$week_start" "+%d %b") - $(date -r "$((week_start + 6 * 86400))" "+%d %b %Y" 2>/dev/null || date -d "@$((week_start + 6 * 86400))" "+%d %b %Y") Stats"
+        calculate_stats_fromawk "$start_str" "$end_str"
         wait_for_key
+        clear
     done
-}
-
-reverse_today_stats() {
-    # Get current date in YYYY-MM-DD format
-    today=$(date "+%Y-%m-%d")
-
-    # Start and end time for today
-    start_date="$today 00:00:00"
-    end_date="$today 23:59:59"
-
-    calculate_stats "$start_date" "$end_date"
-    display_stats "Today ($today)"
-    wait_for_key
 }
 
 show_menu
