@@ -14,7 +14,11 @@ update_config() {
 
     # If key exists in file, update it; otherwise, add it
     if grep -q "^$key=" "$file"; then
-        sed -i "s/^$key=.*/$key=$value/" "$file"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/^$key=.*/$key=$value/" "$file" # macOS
+        else
+            sed -i "s/^$key=.*/$key=$value/" "$file" # Linux
+        fi
         # todo -> Update function to only change the value, NOT remove the Comments
     else
         echo "$key=$value" >>"$file"
