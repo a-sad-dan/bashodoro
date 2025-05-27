@@ -11,24 +11,35 @@ source "$SCRIPT_DIR/config/settings.conf"
 LOG_DIR="$HOME/.bashodoro/logs"
 LOG_FILE="$LOG_DIR/bashodoro.log"
 
-
 if [[ ! -f $LOG_FILE ]]; then
     echo "Log file not found"
     exit 1
 fi
 
-
 calculate_stats_fromawk() {
     local from_time="$1"
     local to_time="$2"
-    local log_file="$LOG_FILE"  # Set your default log file path here
+    local tag_time="$3"
+    local log_file="$LOG_FILE" # Set your default log file path here
     AWK=$(command -v gawk || command -v awk)
-    "$AWK" -F',' -v from="$from_time" -v to="$to_time" '
+    "$AWK" -F',' -v from="$from_time" -v to="$to_time" -v time_tag="$tag_time" '
 function parse_datetime(s,    d, t) {
     split(s, dt, " ")
     split(dt[1], d, "-")
     split(dt[2], t, ":")
     return mktime(d[1] " " d[2] " " d[3] " " t[1] " " t[2] " " t[3])
+}
+function format_time(seconds) {
+    if (seconds < 60) return seconds " sec"
+    if (seconds < 3600) {
+        minutes = seconds / 60
+        remaining_seconds = seconds % 60
+        return sprintf("%d min %d sec", minutes, remaining_seconds)
+    }
+    hours = seconds / 3600
+    remaining_minutes = (seconds % 3600) / 60
+    remaining_seconds = seconds % 60
+    return sprintf("%d hr %d min %d sec", hours, remaining_minutes, remaining_seconds)
 }
 
 BEGIN {
@@ -76,25 +87,39 @@ BEGIN {
 END {
     total_all = total_work + total_short + total_long
 
-    printf("----- Bashodoro Stats -----\n")
-    printf("Time Range: %s to %s\n\n", from == "" ? "START" : from, to == "" ? "NOW" : to)
+    # Define colors
+    GREEN = "\033[1;32m"
+    BLUE = "\033[1;34m"
+    YELLOW = "\033[1;33m"
+    RED = "\033[1;31m"
+    CYAN = "\033[1;36m"
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
 
-    printf("Work Time       : %.2f min (%d sessions)\n", total_work / 60, count_work)
-    printf("Short Break Time: %.2f min (%d sessions)\n", total_short / 60, count_short)
-    printf("Long Break Time : %.2f min (%d sessions)\n", total_long / 60, count_long)
+    # Print with styles
+    printf("\n%s========== Bashodoro Stats ==========%s\n", BOLD, RESET)
+    printf(" %sTime Range%s      : %s → %s\n", CYAN, RESET, from == "" ? from : time_tag, to == "" ? to : time_tag)
+    printf("%s-------------------------------------%s\n", BLUE, RESET)
 
-    printf("\nInterrupts:\n")
-    printf("  Work        : %d\n", int_work)
-    printf("  Short Break : %d\n", int_short)
-    printf("  Long Break  : %d\n", int_long)
+    printf(" %sWork Time%s       : %s%s%s  (%s%2d%s sessions)\n", GREEN, RESET, GREEN, format_time(total_work), RESET, BOLD, count_work, RESET)
+    printf(" %sShort Break%s     : %s%s%s  (%s%2d%s sessions)\n", YELLOW, RESET, YELLOW, format_time(total_short), RESET, BOLD, count_short, RESET)
+    printf(" %sLong Break%s      : %s%s%s  (%s%2d%s sessions)\n", BLUE, RESET, BLUE, format_time(total_long), RESET, BOLD, count_long, RESET)
+
+    printf("%s-------------------------------------%s\n", BLUE, RESET)
+    printf(" %sInterrupts%s\n", RED, RESET)
+    printf("   Work          : %s%2d%s\n", RED, int_work, RESET)
+    printf("   Short Break   : %s%2d%s\n", RED, int_short, RESET)
+    printf("   Long Break    : %s%2d%s\n", RED, int_long, RESET)
 
     if (total_all > 0) {
-        printf("\nTime Distribution:\n")
-        printf("  Work        : %.2f%%\n", total_work * 100 / total_all)
-        printf("  Short Break : %.2f%%\n", total_short * 100 / total_all)
-        printf("  Long Break  : %.2f%%\n", total_long * 100 / total_all)
+        printf("%s-------------------------------------%s\n", BLUE, RESET)
+        printf(" %sTime Distribution%s\n", CYAN, RESET)
+        printf("   Work          : %s%6.2f%%%s\n", GREEN, total_work * 100 / total_all, RESET)
+        printf("   Short Break   : %s%6.2f%%%s\n", YELLOW, total_short * 100 / total_all, RESET)
+        printf("   Long Break    : %s%6.2f%%%s\n", BLUE, total_long * 100 / total_all, RESET)
     }
-    printf("-----------------------------\n")
+    printf("%s=====================================%s\n\n", BOLD, RESET)
+
 }
 ' "$log_file"
 }
@@ -224,8 +249,8 @@ reverse_monthly_stats() {
 
         start_date=$(printf "%04d-%02d-01 00:00:00" "$year" "$month")
         end_date=$(printf "%04d-%02d-01 00:00:00" "$next_year" "$next_month")
-        echo "${months[$((month - 1))]} $year"
-        calculate_stats_fromawk "$start_date" "$end_date"
+        tag="${months[$((month - 1))]} $year"
+        calculate_stats_fromawk "$start_date" "$end_date" "$tag"
         wait_for_key
         clear
     done
@@ -260,9 +285,9 @@ reverse_weekly_stats() {
 
         start_str=$(date -r "$week_start" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_start" "+%Y-%m-%d 00:00:00")
         end_str=$(date -r "$week_end" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_end" "+%Y-%m-%d 00:00:00")
-        echo "Week $i";
+        tag="Week $i"
 
-        calculate_stats_fromawk "$start_str" "$end_str"
+        calculate_stats_fromawk "$start_str" "$end_str" "$tag"
         wait_for_key
         clear
     done
