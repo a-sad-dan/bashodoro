@@ -19,7 +19,7 @@ fi
 calculate_stats_fromawk() {
     local from_time="$1"
     local to_time="$2"
-    local tag_time="$3"
+    tag_time="$3"
     local log_file="$LOG_FILE" # Set your default log file path here
     AWK=$(command -v gawk || command -v awk)
     "$AWK" -F',' -v from="$from_time" -v to="$to_time" -v time_tag="$tag_time" '
@@ -97,28 +97,28 @@ END {
     BOLD = "\033[1m"
 
     # Print with styles
-    printf("\n%s========== Bashodoro Stats ==========%s\n", BOLD, RESET)
-    printf(" %sTime Range%s      : %s → %s\n", CYAN, RESET, from == "" ? from : time_tag, to == "" ? to : time_tag)
-    printf("%s-------------------------------------%s\n", BLUE, RESET)
+    printf("\n%s============= Bashodoro Stats =============%s\n", BOLD, RESET)
+    printf(" %s%s\n", CYAN,time_tag)
+    printf("%s-------------------------------------------%s\n", BLUE, RESET)
 
     printf(" %sWork Time%s       : %s%s%s  (%s%2d%s sessions)\n", GREEN, RESET, GREEN, format_time(total_work), RESET, BOLD, count_work, RESET)
     printf(" %sShort Break%s     : %s%s%s  (%s%2d%s sessions)\n", YELLOW, RESET, YELLOW, format_time(total_short), RESET, BOLD, count_short, RESET)
     printf(" %sLong Break%s      : %s%s%s  (%s%2d%s sessions)\n", BLUE, RESET, BLUE, format_time(total_long), RESET, BOLD, count_long, RESET)
 
-    printf("%s-------------------------------------%s\n", BLUE, RESET)
+    printf("%s-------------------------------------------%s\n", BLUE, RESET)
     printf(" %sInterrupts%s\n", RED, RESET)
     printf("   Work          : %s%2d%s\n", RED, int_work, RESET)
     printf("   Short Break   : %s%2d%s\n", RED, int_short, RESET)
     printf("   Long Break    : %s%2d%s\n", RED, int_long, RESET)
 
     if (total_all > 0) {
-        printf("%s-------------------------------------%s\n", BLUE, RESET)
+        printf("%s-------------------------------------------%s\n", BLUE, RESET)
         printf(" %sTime Distribution%s\n", CYAN, RESET)
         printf("   Work          : %s%6.2f%%%s\n", GREEN, total_work * 100 / total_all, RESET)
         printf("   Short Break   : %s%6.2f%%%s\n", YELLOW, total_short * 100 / total_all, RESET)
         printf("   Long Break    : %s%6.2f%%%s\n", BLUE, total_long * 100 / total_all, RESET)
     }
-    printf("%s=====================================%s\n\n", BOLD, RESET)
+    printf("%s===========================================%s\n\n", BOLD, RESET)
 
 }
 ' "$log_file"
@@ -176,7 +176,7 @@ show_menu() {
 
         case $choice in
         1)
-            calculate_stats_fromawk "$(date '+%Y-%m-%d 00:00:00')" "$(date '+%Y-%m-%d 23:59:59')"
+            calculate_stats_fromawk "$(date '+%Y-%m-%d 00:00:00')" "$(date '+%Y-%m-%d 23:59:59')" "Today's Stats ($(date '+%Y-%m-%d'))"
             wait_for_key
             clear
             ;;
@@ -189,7 +189,11 @@ show_menu() {
             clear
             ;;
         4)
-            calculate_stats_fromawk "" ""
+            first_line=$(head -n 1 "$LOG_FILE")
+            first_date=$(echo "$first_line" | cut -d' ' -f1)
+            last_line=$(tail -n 1 "$LOG_FILE")
+            last_date=$(echo "$last_line" | cut -d' ' -f1)
+            calculate_stats_fromawk "" "" "Total Stats (from $first_date to $last_date)"
             wait_for_key
             clear
             ;;
@@ -249,7 +253,7 @@ reverse_monthly_stats() {
 
         start_date=$(printf "%04d-%02d-01 00:00:00" "$year" "$month")
         end_date=$(printf "%04d-%02d-01 00:00:00" "$next_year" "$next_month")
-        tag="${months[$((month - 1))]} $year"
+        tag="${months[$((month - 1))]} $year -> ${months[$((next_month-1))]} $next_year"
         calculate_stats_fromawk "$start_date" "$end_date" "$tag"
         wait_for_key
         clear
@@ -285,7 +289,9 @@ reverse_weekly_stats() {
 
         start_str=$(date -r "$week_start" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_start" "+%Y-%m-%d 00:00:00")
         end_str=$(date -r "$week_end" "+%Y-%m-%d 00:00:00" 2>/dev/null || date -d "@$week_end" "+%Y-%m-%d 00:00:00")
-        tag="Week $i"
+        start_str_t=$(date -r "$week_start" "+%Y-%m-%d" 2>/dev/null || date -d "@$week_start" "+%Y-%m-%d")
+        end_str_t=$(date -r "$week_end" "+%Y-%m-%d" 2>/dev/null || date -d "@$week_end" "+%Y-%m-%d")
+        tag="Week $i ($start_str_t to $end_str_t)"
 
         calculate_stats_fromawk "$start_str" "$end_str" "$tag"
         wait_for_key
